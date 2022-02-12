@@ -1,0 +1,38 @@
+<html lang="en"> 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+  <link rel="stylesheet" href="src/css/style.css">
+  <title>Create Wallet</title>
+</head>
+<body>
+<div id="mainFormDiv">
+  <form id="mainForm" method="post" class="row g-3" action="/display">
+    <div class="col-12">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-control" name="name" id="name">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Surname</label>
+      <input type="text" class="form-control" name="surname" id="surname">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-control" name="email" id="email">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Account type:</label>
+      <input type="radio" name="acc_type" value="client" id="client">Client
+      <input type="radio" name="acc_type" value="lawyer" id="lawyer">Lawyer
+    </div>
+    <div class="col-12">
+      <button id="submitBtn" type="submit" class="btn btn-success" >Create</button>
+    </div>
+  </form>
+</div>
+        <script src="src/js/SolTransaction.cjs"></script>
+        <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script src="node_modules/jquery/dist/jquery.min.js"></script>
+</body>
+</html>

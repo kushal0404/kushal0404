@@ -1,0 +1,42 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "route.cjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node route.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@solana/web3.js": "^1.32.0",
+    "body-parser": "^1.19.1",
+    "bootstrap": "^5.0.0-alpha1",
+    "bootstrap-icons": "^1.7.2",
+    "bs58": "^4.0.1",
+    "crypto": "^1.0.1",
+    "express": "^4.17.1",
+    "jquery": "^3.6.0",
+    "mongodb": "^4.3.1",
+    "rust": "^0.1.6",
+    "solana-client-js": "^0.0.6",
+    "web3": "^1.7.0"
+  },
+  "type": "module",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.2.3",
+    "babel-preset-es2015": "^6.24.1",
+    "babelify": "^10.0.0",
+    "browser-sync": "^2.27.7",
+    "browserify": "^17.0.0",
+    "del": "^6.0.0",
+    "gulp": "^4.0.2",
+    "gulp-connect": "^5.7.0",
+    "gulp-sass": "^5.1.0",
+    "gulp-uglify": "^3.0.2",
+    "vinyl-source-stream": "^2.0.0"
+  }
+}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Create Wallet</title>
+        <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+        <link rel="stylesheet" href="src/css/style.css">
+    </head>
+    <body>
+        <div id="mainFormDiv">
+            <h1>InheritChain</h1>
+            <form id="mainForm" class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Name1</label>
+                  <input type="text" class="form-control" id="inputEmail4">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Surname1</label>
+                  <input type="text" class="form-control" id="inputPassword4">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Email1</label>
+                  <input type="email" class="form-control" id="inputCity">
+                </div>
+                <div class="col-12">
+                  <button id="submitBtn" class="btn btn-success" onclick="submitAction()">Create</button>
+                </div>
+              </form>
+        </div>
+        <script src="src/js/SolTransaction.cjs"></script>
+        <script src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    </body>
+</html>
