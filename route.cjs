@@ -190,9 +190,4 @@ const decrypt = (hash) => {
   return decrpyted.toString();
 };
 
-module.exports = {
-  encrypt,
-  decrypt
-};
-
 app.listen(3000, () => console.log(`App listening on port 3000`))
