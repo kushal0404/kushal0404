@@ -13,7 +13,7 @@ var url = "mongodb+srv://admin:admin@cluster0.fozkz.mongodb.net/Inherit?retryWri
 var app = express();
 const port = 3000;
 
-app.get('/',function(req,res) 
+app.get('/',function(req,res)
 {
   console.log("------------------------------------"+__dirname);
   res.sendFile(__dirname + '/CreateWallet.html');
@@ -42,9 +42,9 @@ app.post("/display", (req, res) => {
     const from = web3.Keypair.generate();
     firstPublicKey=from.publicKey.toString();
     firstSecretKey=from.secretKey.toString();
-    
+
     ({ seckey_base, seckey_hex, dec_seckey_hex, originalArray } = conversions(from));
-    
+
     airDropSignature = await connection.requestAirdrop(
       from.publicKey,
       web3.LAMPORTS_PER_SOL,
@@ -69,23 +69,61 @@ app.post("/display", (req, res) => {
     transaction,
     [from],
   );
-  
+
   //Encrypted from bs58
   ({ encrypted_sec_key, decrypted_sec_key } = encryptions(seckey_base));
 
 })();
 
 
-databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname);
+function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname) {
+  MongoClient.connect(url, function (err, db) {
+    if (err)
+      throw err;
+    var dbo = db.db("Inherit");
+    insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo);
 
-setTimeout(()=>
-{
-    console.log("db_mail:"+db_mail);
-    console.log("db_name:"+db_name);
-    console.log("db_surname:"+db_surname);
-    let finalString = printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature);
-    res.send(finalString);
-  },5000);
+    ({ db_name, db_mail, db_surname } = findAccount(email, dbo, db_name, db_mail, db_surname, db).then(() => {
+    })
+  );
+})};
+
+async function findAccount(email, dbo, db_name, db_mail, db_surname, db){
+    let new_db_name, new_db_mail, new_db_surname
+
+    var query = { email: email };
+
+    const result = dbo.collection("account").find(query);
+
+    await result.forEach(document => {
+      console.log("---------------------email ---------------------" + document.email);
+      new_db_name = document.name;
+      new_db_mail = document.email;
+      new_db_surname = document.surname;
+    });
+    console.log("IN DB NAME: ", new_db_name);
+    console.log("\nIN DB MAIL: ", new_db_mail);
+    console.log("\nIN DB SURNAME: ", new_db_surname);
+
+    return {new_db_name, new_db_mail, new_db_surname};
+}
+
+
+function insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo) {
+  var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
+  dbo.collection("account").insertOne(myobj, function (err, res) {
+    if (err)
+      throw err;
+    console.log("1 document inserted");
+  });
+}
+
+databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname);
+  console.log("db_mail:"+db_mail);
+  console.log("db_name:"+db_name);
+  console.log("db_surname:"+db_surname);
+  let finalString = printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature);
+  res.send(finalString);
 });
 
 const encrypt = (text) => {
@@ -112,26 +150,6 @@ const decrypt = (hash) => {
 
 function printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature) {
   let finalString = "<h1>Account Created Successfully!</h1>";
-  finalString += "</br>";
-  finalString += "Name";
-  finalString += "</br>";
-  finalString += db_name;
-  finalString += "</br>";
-  finalString += "Surname";
-  finalString += "</br>";
-  finalString += db_surname;
-  finalString += "</br>";
-  finalString += "Email";
-  finalString += "</br>";
-  finalString += db_mail;
-  finalString += "</br>";
-  finalString += "Pubkey in BS58:";
-  finalString += "</br>";
-  finalString += db_pubkey;
-  finalString += "</br>";
-  finalString += "Seckey Array:";
-  finalString += "</br>";
-  finalString += db_seckey;
   finalString += "</br>";
   finalString += "Secret Key in HEX";
   finalString += "</br>";
@@ -171,41 +189,7 @@ function printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_he
   return finalString;
 }
 
-function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname) {
-  MongoClient.connect(url, function (err, db) {
-    if (err)
-      throw err;
-    var dbo = db.db("Inherit");
-    insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo);
-    ({ db_name, db_mail, db_surname } = findAccount(email, dbo, db_name, db_mail, db_surname, db));
-  });
-}
 
-function findAccount(email, dbo, db_name, db_mail, db_surname, db) {
-  var query = { email: email };
-  dbo.collection("account").find(query).toArray(function (err, result) {
-    if (err)
-      throw err;
-    console.log(result);
-    result.forEach(document => {
-      console.log("---------------------email ---------------------" + document.email);
-      db_name = document.name;
-      db_mail = document.email;
-      db_surname = document.surname;
-    });
-    db.close();
-  });
-  return { db_name, db_mail, db_surname };
-}
-
-function insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo) {
-  var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
-  dbo.collection("account").insertOne(myobj, function (err, res) {
-    if (err)
-      throw err;
-    console.log("1 document inserted");
-  });
-}
 
 function encryptions(seckey_base) {
   let encrypted_sec_key = encrypt(seckey_base);
@@ -222,11 +206,11 @@ function conversions(from) {
   let seckey_hex = Buffer.from(from.secretKey).toString('hex');
 
   //bs58 from Uint8
-  //base58 representation of secret key,because from.secretKey gives us Uint8Array  
+  //base58 representation of secret key,because from.secretKey gives us Uint8Array
   let seckey_base = bs58.encode(from.secretKey);
 
   //HEX from bs58
-  //HEX from bs58 representation of secret key  
+  //HEX from bs58 representation of secret key
   let dec_seckey_hex = bs58.decode(seckey_base).toString('hex');
 
   const fromHexString = dec_seckey_hex => new Uint8Array(dec_seckey_hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
