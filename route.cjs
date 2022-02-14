@@ -29,11 +29,7 @@ app.post("/display", (req, res) => {
   let surname=req.body.surname;
   let email=req.body.email;
   let account_type=req.body.acc_type;
-  console.log(req.body);
-  console.log(req.body.name);
-  console.log(req.body.surname);
-  console.log(req.body.email);
-  let firstPublicKey,secondPublicKey,firstSecretKey,airDropSignature,transferSignature;
+  let firstPublicKey,secondPublicKey,firstSecretKey,airDropSignature,transferSignature,db_name,db_surname,db_mail,db_pubkey,db_seckey,encrypted_sec_key,decrypted_sec_key,seckey_hex,dec_seckey_hex,originalArray;
 
   (async () => {
     // Connect to cluster
@@ -42,26 +38,12 @@ app.post("/display", (req, res) => {
       web3.clusterApiUrl('devnet'),
       'confirmed',
     );
-    
+
     const from = web3.Keypair.generate();
     firstPublicKey=from.publicKey.toString();
     firstSecretKey=from.secretKey.toString();
     
-    //HEX from Uint8
-    //HEX representation of secret key,because from.secretKey gives us Uint8Array
-    let seckey_hex=Buffer.from(from.secretKey).toString('hex');
-
-    //bs58 from Uint8
-    //base58 representation of secret key,because from.secretKey gives us Uint8Array  
-    let seckey_base=bs58.encode(from.secretKey);
-    
-    //HEX from bs58
-    //HEX from bs58 representation of secret key  
-    let dec_seckey_hex=bs58.decode(seckey_base).toString('hex');
-
-    const fromHexString = dec_seckey_hex =>
-    new Uint8Array(dec_seckey_hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-    let originalArray=fromHexString(dec_seckey_hex);
+    ({ seckey_base, seckey_hex, dec_seckey_hex, originalArray } = conversions(from));
     
     airDropSignature = await connection.requestAirdrop(
       from.publicKey,
@@ -89,46 +71,67 @@ app.post("/display", (req, res) => {
   );
   
   //Encrypted from bs58
-  let encrypted_sec_key=encrypt(seckey_base);
-  console.log("Original base58 key:"+seckey_base);
-  console.log("Encryted IV:"+encrypted_sec_key.iv);
-  console.log("Encryted Content:"+encrypted_sec_key.content);
+  ({ encrypted_sec_key, decrypted_sec_key } = encryptions(seckey_base));
 
-  //Decrypted from Encrypted that will give bs58
-  let decrypted_sec_key=decrypt(encrypted_sec_key);
-  console.log("Decrypted:"+decrypted_sec_key);
-  //inserting the data into database
-  MongoClient.connect(url, function(err, db) {
-    if (err) throw err;
-    var dbo = db.db("Inherit");
-    var myobj = { name: name, surname: surname,email:email,account_type:account_type,publicKey:firstPublicKey,secret_key:encrypted_sec_key};
-    dbo.collection("account").insertOne(myobj, function(err, res) {
-      if (err) throw err;
-      console.log("1 document inserted");
-      db.close();
-    });
-  });
-  let finalString="<h1>Account Created Successfully!</h1>";
+})();
+
+
+databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname);
+
+setTimeout(()=>
+{
+    console.log("db_mail:"+db_mail);
+    console.log("db_name:"+db_name);
+    console.log("db_surname:"+db_surname);
+    let finalString = printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature);
+    res.send(finalString);
+  },2500);
+});
+
+const encrypt = (text) => {
+
+  const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+
+  const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
+
+  return {
+      iv: iv.toString('hex'),
+      content: encrypted.toString('hex')
+  };
+};
+
+const decrypt = (hash) => {
+
+  const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
+
+  const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+
+  return decrpyted.toString();
+};
+
+
+function printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature) {
+  let finalString = "<h1>Account Created Successfully!</h1>";
   finalString += "</br>";
   finalString += "Name";
   finalString += "</br>";
-  finalString += "name val";
+  finalString += db_name;
   finalString += "</br>";
   finalString += "Surname";
   finalString += "</br>";
-  finalString += "surname val";
+  finalString += db_surname;
   finalString += "</br>";
   finalString += "Email";
   finalString += "</br>";
-  finalString += "email val";
+  finalString += db_mail;
   finalString += "</br>";
   finalString += "Pubkey in BS58:";
   finalString += "</br>";
-  finalString += firstPublicKey;
+  finalString += db_pubkey;
   finalString += "</br>";
   finalString += "Seckey Array:";
   finalString += "</br>";
-  finalString += firstSecretKey;
+  finalString += db_seckey;
   finalString += "</br>";
   finalString += "Secret Key in HEX";
   finalString += "</br>";
@@ -160,34 +163,75 @@ app.post("/display", (req, res) => {
   finalString += "</br>";
   finalString += airDropSignature;
   finalString += "</br>";
-  finalString += "Transfer from "+firstPublicKey+" to "+secondPublicKey+" is successful.";
+  finalString += "Transfer from " + firstPublicKey + " to " + secondPublicKey + " is successful.";
   finalString += "</br>";
   finalString += "Signature:";
   finalString += "</br>";
   finalString += transferSignature;
-  res.send(finalString);
-  })();
-});
+  return finalString;
+}
 
-const encrypt = (text) => {
+function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname) {
+  MongoClient.connect(url, function (err, db) {
+    if (err)
+      throw err;
+    var dbo = db.db("Inherit");
+    insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo);
+    ({ db_name, db_mail, db_surname } = findAccount(email, dbo, db_name, db_mail, db_surname, db));
+  });
+}
 
-  const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+function findAccount(email, dbo, db_name, db_mail, db_surname, db) {
+  var query = { email: email };
+  dbo.collection("account").find(query).toArray(function (err, result) {
+    if (err)
+      throw err;
+    console.log(result);
+    result.forEach(document => {
+      console.log("---------------------email" + document.email);
+      db_name = document.name;
+      db_mail = document.email;
+      db_surname = document.surname;
+    });
+    db.close();
+  });
+  return { db_name, db_mail, db_surname };
+}
 
-  const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
+function insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo) {
+  var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
+  dbo.collection("account").insertOne(myobj, function (err, res) {
+    if (err)
+      throw err;
+    console.log("1 document inserted");
+  });
+}
 
-  return {
-      iv: iv.toString('hex'),
-      content: encrypted.toString('hex')
-  };
-};
+function encryptions(seckey_base) {
+  let encrypted_sec_key = encrypt(seckey_base);
 
-const decrypt = (hash) => {
+  //Decrypted from Encrypted that will give bs58
+  let decrypted_sec_key = decrypt(encrypted_sec_key);
+  return { encrypted_sec_key, decrypted_sec_key };
+}
 
-  const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
+function conversions(from) {
 
-  const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+  //HEX from Uint8
+  //HEX representation of secret key,because from.secretKey gives us Uint8Array
+  let seckey_hex = Buffer.from(from.secretKey).toString('hex');
 
-  return decrpyted.toString();
-};
+  //bs58 from Uint8
+  //base58 representation of secret key,because from.secretKey gives us Uint8Array  
+  let seckey_base = bs58.encode(from.secretKey);
+
+  //HEX from bs58
+  //HEX from bs58 representation of secret key  
+  let dec_seckey_hex = bs58.decode(seckey_base).toString('hex');
+
+  const fromHexString = dec_seckey_hex => new Uint8Array(dec_seckey_hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+  let originalArray = fromHexString(dec_seckey_hex);
+  return { seckey_base, seckey_hex, dec_seckey_hex, originalArray };
+}
 
 app.listen(3000, () => console.log(`App listening on port 3000`))
