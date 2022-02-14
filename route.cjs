@@ -85,7 +85,7 @@ setTimeout(()=>
     console.log("db_surname:"+db_surname);
     let finalString = printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature);
     res.send(finalString);
-  },2500);
+  },5000);
 });
 
 const encrypt = (text) => {
@@ -188,7 +188,7 @@ function findAccount(email, dbo, db_name, db_mail, db_surname, db) {
       throw err;
     console.log(result);
     result.forEach(document => {
-      console.log("---------------------email" + document.email);
+      console.log("---------------------email ---------------------" + document.email);
       db_name = document.name;
       db_mail = document.email;
       db_surname = document.surname;
