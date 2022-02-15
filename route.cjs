@@ -52,7 +52,8 @@ app.post("/display", (req, res) =>
     ({seckey_base}= conversions(from));
     //Encrypted from bs58
     ({ encrypted_sec_key, decrypted_sec_key } = await encryptions(seckey_base));
-    await databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname);
+     databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key,res);
+      //console.log(response);
   })();
 
   //let finalString = printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature);
@@ -125,46 +126,81 @@ async function encryptions(seckey_base)
   return { encrypted_sec_key, decrypted_sec_key };
 }
 
-async function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname) 
+async function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key,res) 
 {
-  console.log("encrypted_sec_key="+encrypted_sec_key);
-  MongoClient.connect(url, function (err, db) 
-  {
+  var returnVar = {};
+  MongoClient.connect(url, function(err, db) {
     if (err)
-      throw err;
+        throw err;
     var dbo = db.db("Inherit");
-    insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo);
+    var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
 
-    ({ db_name, db_mail, db_surname } = findAccount(email, dbo, db_name, db_mail, db_surname, db).then(() => {}));
-  })
-};
+    var firstPromise = () => 
+    {
+      return new Promise((resolve,reject) => 
+      {
+        console.log("Insert start");
+        dbo.collection("account").insertOne(myobj, function (err, res) 
+        {
+          if (err)
+            throw err;
+          console.log("1 document inserted");
+          resolve('Test');
+        });
+      })
+    };
+    var callMyPromise = async() => {
+      await(firstPromise());
+      console.log("Insert end");
+      //db.close();
+      return 'ok';
+    }
+    callMyPromise().then(function(result){
+      console.log('here')
+      findAccount(myobj.email, dbo).then(function(response)
+      {
+        returnVar = response;
+        //res.send("Done");
+        return response;
+      });
+    });
+  });
+  return returnVar;
+}
 
 function insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo) 
 {
+  console.log("Insert start");
   var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
+  
   dbo.collection("account").insertOne(myobj, function (err, res) 
   {
     if (err)
       throw err;
     console.log("1 document inserted");
+    
   });
+  console.log("Insert end");
 }
 
-async function findAccount(email, dbo, db_name, db_mail, db_surname, db){
-  let new_db_name, new_db_mail, new_db_surname
+async function findAccount(email, dbo)
+{
+    console.log("Find start");
+    var query = { email: email };
 
-  var query = { email: email };
+    const result = dbo.collection("account").find(query);
 
-  const result = dbo.collection("account").find(query);
+    await result.forEach(document => 
+      {
+        db_name = document.name;
+        db_mail = document.email;
+        db_surname = document.surname;
+      });
 
-  await result.forEach(document => 
-  {
-    new_db_name = document.name;
-    new_db_mail = document.email;
-    new_db_surname = document.surname;
-  });
-  console.log("new_db_name="+new_db_name);
-  return {new_db_name, new_db_mail, new_db_surname};
+    console.log("db_name="+db_name);
+    console.log("Find End");
+  
+  return {db_name, db_mail, db_surname};
 }
 
 function conversions(from) 
