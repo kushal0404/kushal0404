@@ -59,20 +59,50 @@ app.post("/display", (req, res) =>
   //res.send(finalString);
 });
 
-async function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname) {
-    const result = await mongo.insertAccount({name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key});
+async function databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res)
+{
+  var returnVar = {};
+  MongoClient.connect(url, function(err, db) {
+    if (err)
+        throw err;
+    var dbo = db.db("Inherit");
+    var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
 
-    const findRes = await mongo.findAccount({email: email})
-    console.log("FOUND: ", findRes);
-    db_name = findRes.name;
-    db_surname = findRes.surname;
-    db_mail = findRes.email;
-};
-
-databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname);
-  let finalString = printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature);
-  res.send(finalString);
-});
+    var firstPromise = () =>
+    {
+      return new Promise((resolve,reject) =>
+      {
+        console.log("Insert start");
+        dbo.collection("account").insertOne(myobj, function (err, res)
+        {
+          if (err)
+            throw err;
+          console.log("1 document inserted");
+          console.log("ObjectId:"+res.insertedId);
+          resolve('Test');
+        });
+      })
+    };
+    var callMyPromise = async() => {
+      await(firstPromise());
+      console.log("Insert end");
+      //db.close();
+      return 'ok';
+    }
+    callMyPromise().then(function(result){
+      console.log('here')
+      findAccount(myobj.email, dbo).then(function(response)
+      {
+        returnVar = response;
+        printData(response.db_mail, response.db_name, response.db_surname, response.db_pubkey,decrypted_sec_key,res);
+        //res.send(finalString);
+        //res.send("Done");
+        return response;
+      });
+    });
+  });
+  return returnVar;
+}
 
 const encrypt = (text) => {
   const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
