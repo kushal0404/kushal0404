@@ -1,25 +1,43 @@
 const { MongoClient } = require('mongodb');
 
-const uri = "mongodb+srv://admin:admin@cluster0.fozkz.mongodb.net/Inherit?retryWrites=true&w=majority";
+const uri = "mongodb://conestoga:Testing123@3.98.221.213:27017/sample-db";
+const dbName = "sample-db";
 
 const client = new MongoClient(uri);
 
 client.connect();
 
-const dbName = "Inherit";
 const db = client.db(dbName);
-const collection = db.collection('account');
+const collection = db.collection('account-data');
 
 const insertAccount = async (obj) => {
-  const insertResult = await collection.insertOne(obj);
-  console.log("\n1 Document Inserted.")
-  return insertResult;
+  return new Promise(async (resolve, reject) => {
+    const insertResult = await collection.insertOne(obj, function (err, res) {
+      if (err) {
+        throw err;
+        reject("Document didn't insert")
+      }
+
+      console.log("ObjectId: "+ res.insertedId);
+      resolve(res);
+    });
+  })
 };
 
-const findAccount = async (qry) => {
-  const result = await collection.findOne(qry);
-  console.log("\nDocument Found.")
-  return result;
+const findAccount = (query) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const result = await collection.findOne(query);
+
+      //console.log("db_name="+result.name);
+      //console.log("db_pubkey="+result.publicKey);
+
+      resolve(result);
+
+    } finally {
+
+    }
+  })
 }
 
 const modifyRecord = async (user_id, newRecord) => {
