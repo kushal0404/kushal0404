@@ -16,7 +16,7 @@ const port = 3000;
 app.get('/',function(req,res)
 {
   console.log("------------------------------------"+__dirname);
-  res.sendFile(__dirname + '/CreateWallet.html');
+  res.sendFile(__dirname + '/src/html/CreateWallet.html');
 });
 
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -44,6 +44,8 @@ app.post("/display", (req, res) =>
     let from;
     ({ from, firstPublicKey, firstSecretKey } = createAccount(firstPublicKey, firstSecretKey));
 
+    let balance= await getBalance(connection,from.publicKey);
+    console.log("Balance="+balance);
     airDropSignature = await airdropAccount(airDropSignature, connection, from);
     
     // Transfer SOL to random account
@@ -201,6 +203,15 @@ async function findAccount(email, dbo)
     console.log("Find End");
   
   return {db_name, db_mail, db_surname};
+}
+
+
+//This function is used to fetch the account balance
+async function getBalance(connection,publicKey)
+{
+  const balance =await connection.getBalance(publicKey);
+  console.log(balance);
+  return balance;
 }
 
 function conversions(from) 
