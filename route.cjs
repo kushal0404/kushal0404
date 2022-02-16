@@ -44,11 +44,11 @@ app.post("/display", (req, res) =>
     let from;
     ({ from, firstPublicKey, firstSecretKey } = createAccount(firstPublicKey, firstSecretKey));
 
-    airDropSignature = await airdropAccount(airDropSignature, connection, from);
+    //airDropSignature = await airdropAccount(airDropSignature, connection, from);
     
     // Transfer SOL to random account
-    ({ secondPublicKey, transferSignature } = await transferOperation(secondPublicKey, from, transferSignature, connection));
-      console.log("transferSignature="+transferSignature);
+    /* ({ secondPublicKey, transferSignature } = await transferOperation(secondPublicKey, from, transferSignature, connection));
+      console.log("transferSignature="+transferSignature); */
     ({seckey_base}= conversions(from));
     //Encrypted from bs58
     ({ encrypted_sec_key, decrypted_sec_key } = await encryptions(seckey_base));
@@ -145,6 +145,7 @@ async function databaseOperations(name, surname, email, account_type, firstPubli
           if (err)
             throw err;
           console.log("1 document inserted");
+          console.log("ObjectId:"+res.insertedId);
           resolve('Test');
         });
       })
