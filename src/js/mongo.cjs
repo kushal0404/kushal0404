@@ -26,17 +26,8 @@ const insertAccount = async (obj) => {
 
 const findAccount = (query) => {
   return new Promise(async (resolve, reject) => {
-    try {
-      const result = await collection.findOne(query);
-
-      //console.log("db_name="+result.name);
-      //console.log("db_pubkey="+result.publicKey);
-
-      resolve(result);
-
-    } finally {
-
-    }
+  const result = await collection.findOne(query);
+  resolve(result);
   })
 }
 
