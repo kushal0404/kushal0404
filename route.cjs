@@ -52,7 +52,7 @@ app.post("/display", (req, res) =>
     ({seckey_base}= conversions(from));
     //Encrypted from bs58
     ({ encrypted_sec_key, decrypted_sec_key } = await encryptions(seckey_base));
-     databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res);
+     databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key,res);
       //console.log(response);
   })();
 
@@ -126,7 +126,7 @@ async function encryptions(seckey_base)
   return { encrypted_sec_key, decrypted_sec_key };
 }
 
-async function databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res) 
+async function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key,res) 
 {
   var returnVar = {};
   MongoClient.connect(url, function(err, db) {
@@ -161,8 +161,6 @@ async function databaseOperations(name, surname, email, account_type, firstPubli
       findAccount(myobj.email, dbo).then(function(response)
       {
         returnVar = response;
-        printData(response.db_mail, response.db_name, response.db_surname, response.db_pubkey,decrypted_sec_key,res);
-        //res.send(finalString);
         //res.send("Done");
         return response;
       });
@@ -171,74 +169,19 @@ async function databaseOperations(name, surname, email, account_type, firstPubli
   return returnVar;
 }
 
-function printData(db_mail, db_name, db_surname, db_pubkey, decrypted_sec_key,res)
+function insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo) 
 {
-  let finalString ="<h1>Account Created Successfully!</h1>";
-  finalString += "</br>";
-  finalString += "Name";
-  finalString += "</br>";
-  finalString += db_name;
-  finalString += "</br>";
-  finalString += "Surname";
-  finalString += "</br>";
-  finalString += db_surname;
-  finalString += "</br>";
-  finalString += "Email";
-  finalString += "</br>";
-  finalString += db_mail;
-  finalString += "</br>";
-  finalString += "Public Key";
-  finalString += "</br>";
-  finalString += db_pubkey;
-  finalString += "</br>";
-  finalString += "Secret Key";
-  finalString += "</br>";
-  finalString += decrypted_sec_key;
-  finalString += "</br>";
-  res.send(finalString);
-  /* finalString += "Pubkey in BS58:";
-  finalString += "</br>";
-  finalString += firstPublicKey;
-  finalString += "</br>";
-  finalString += "Seckey Array:";
-  finalString += "</br>";
-  finalString += firstSecretKey;
-  finalString += "</br>";
-  finalString += "Secret Key in HEX";
-  finalString += "</br>";
-  finalString += seckey_hex;
-  finalString += "</br>";
-  finalString += "Secret Key in BS58";
-  finalString += "</br>";
-  finalString += seckey_base;
-  finalString += "</br>";
-  finalString += "Secret Key Encrypted ";
-  finalString += "</br>";
-  finalString += encrypted_sec_key;
-  finalString += "</br>";
-  finalString += "Secret Key in BS58";
-  finalString += "</br>";
-  finalString += decrypted_sec_key;
-  finalString += "</br>";
-  finalString += "Secret Key in HEX";
-  finalString += "</br>";
-  finalString += dec_seckey_hex;
-  finalString += "</br>";
-  finalString += "Secret Key array ";
-  finalString += "</br>";
-  finalString += originalArray;
-  finalString += "</br>";
-  finalString += "Airdrop of 1 SOL is successful.";
-  finalString += "</br>";
-  finalString += "Signature:";
-  finalString += "</br>";
-  finalString += airDropSignature;
-  finalString += "</br>";
-  finalString += "Transfer from "+firstPublicKey+" to "+secondPublicKey+" is successful.";
-  finalString += "</br>";
-  finalString += "Signature:";
-  finalString += "</br>";
-  finalString += transferSignature; */
+  console.log("Insert start");
+  var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
+  
+  dbo.collection("account").insertOne(myobj, function (err, res) 
+  {
+    if (err)
+      throw err;
+    console.log("1 document inserted");
+    
+  });
+  console.log("Insert end");
 }
 
 async function findAccount(email, dbo)
@@ -253,14 +196,12 @@ async function findAccount(email, dbo)
         db_name = document.name;
         db_mail = document.email;
         db_surname = document.surname;
-        db_pubkey = document.publicKey;
       });
 
     console.log("db_name="+db_name);
-    console.log("db_pubkey="+db_pubkey);
     console.log("Find End");
   
-  return {db_name, db_mail, db_surname,db_pubkey};
+  return {db_name, db_mail, db_surname};
 }
 
 function conversions(from) 
@@ -281,20 +222,5 @@ function conversions(from)
   let originalArray = fromHexString(dec_seckey_hex);
   return { seckey_base};
 }
-
-/* function insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo) 
-{
-  console.log("Insert start");
-  var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
-  
-  dbo.collection("account").insertOne(myobj, function (err, res) 
-  {
-    if (err)
-      throw err;
-    console.log("1 document inserted");
-    
-  });
-  console.log("Insert end");
-} */
 
 app.listen(3000, () => console.log(`App listening on port 3000`))
