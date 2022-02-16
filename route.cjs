@@ -22,15 +22,16 @@ app.get('/',function(req,res)
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static(__dirname));
 
-app.post("/display", (req, res) => {
-
+app.post("/display", (req, res) =>
+{
   let name=req.body.name;
   let surname=req.body.surname;
   let email=req.body.email;
   let account_type=req.body.acc_type;
   let firstPublicKey,secondPublicKey,firstSecretKey,airDropSignature,transferSignature,db_name,db_surname,db_mail,db_pubkey,db_seckey,encrypted_sec_key,decrypted_sec_key,seckey_hex,dec_seckey_hex,originalArray;
 
-  (async () => {
+  (async () =>
+  {
     // Connect to cluster
     console.log(web3.clusterApiUrl('devnet'))
     const connection = new web3.Connection(
@@ -38,41 +39,25 @@ app.post("/display", (req, res) => {
       'confirmed',
     );
 
-    const from = web3.Keypair.generate();
-    firstPublicKey=from.publicKey.toString();
-    firstSecretKey=from.secretKey.toString();
+    //Creating the account
+    let from;
+    ({ from, firstPublicKey, firstSecretKey } = createAccount(firstPublicKey, firstSecretKey));
 
-    ({ seckey_base, seckey_hex, dec_seckey_hex, originalArray } = conversions(from));
+    //airDropSignature = await airdropAccount(airDropSignature, connection, from);
 
-    airDropSignature = await connection.requestAirdrop(
-      from.publicKey,
-      web3.LAMPORTS_PER_SOL,
-    );
-    await connection.confirmTransaction(airDropSignature);
-      console.log(airDropSignature);
-    // Generate a new random public key
-    const to = web3.Keypair.generate();
-    secondPublicKey=to.publicKey.toString();
-    // Add transfer instruction to transaction
-    const transaction = new web3.Transaction().add(
-    web3.SystemProgram.transfer({
-      fromPubkey: from.publicKey,
-      toPubkey: to.publicKey,
-      lamports: web3.LAMPORTS_PER_SOL / 100,
-    }),
-  );
+    // Transfer SOL to random account
+    /* ({ secondPublicKey, transferSignature } = await transferOperation(secondPublicKey, from, transferSignature, connection));
+      console.log("transferSignature="+transferSignature); */
+    ({seckey_base}= conversions(from));
+    //Encrypted from bs58
+    ({ encrypted_sec_key, decrypted_sec_key } = await encryptions(seckey_base));
+     databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res);
+      //console.log(response);
+  })();
 
-    // Sign transaction, broadcast, and confirm
-  transferSignature = await web3.sendAndConfirmTransaction(
-    connection,
-    transaction,
-    [from],
-  );
-
-  //Encrypted from bs58
-  ({ encrypted_sec_key, decrypted_sec_key } = encryptions(seckey_base));
-
-})();
+  //let finalString = printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature);
+  //res.send(finalString);
+});
 
 async function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, db_name, db_mail, db_surname) {
     const result = await mongo.insertAccount({name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key});
