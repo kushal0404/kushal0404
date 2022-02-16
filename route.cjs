@@ -16,7 +16,7 @@ const port = 3000;
 app.get('/',function(req,res)
 {
   console.log("------------------------------------"+__dirname);
-  res.sendFile(__dirname + '/CreateWallet.html');
+  res.sendFile(__dirname + '/src/html/CreateWallet.html');
 });
 
 app.use(bodyParser.urlencoded({ extended: true }))
