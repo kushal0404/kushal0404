@@ -221,4 +221,6 @@ function conversions(from)
   return { seckey_base};
 }
 
+app.use('/fileApi', require('./api/fileApi'));
+
 app.listen(3000, () => console.log(`App listening on port 3000`))
