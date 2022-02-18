@@ -5,25 +5,33 @@ const web3 = require("@solana/web3.js");
 const bs58 = require('bs58');
 const crypto = require('crypto');
 
+// IMPORT MONGODB MODULE
+const mongo = require('./src/js/mongo.cjs');
+
 const algorithm = 'aes-256-ctr';
 const secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzkz9';
 const iv = crypto.randomBytes(16);
-var url = "mongodb+srv://admin:admin@cluster0.fozkz.mongodb.net/Inherit?retryWrites=true&w=majority";
 
 var app = express();
 const port = 3000;
 
+
+
+
+// HOME PAGE FOR REGISTRATION
 app.get('/',function(req,res)
 {
   console.log("------------------------------------"+__dirname);
   res.sendFile(__dirname + '/src/html/CreateWallet.html');
 });
 
-app.use(bodyParser.urlencoded({ extended: true }))
 
+app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static(__dirname));
 
-app.post("/display", (req, res) => 
+
+// ACCOUNT DISPLAY PAGE
+app.post("/display", (req, res) =>
 {
   let name=req.body.name;
   let surname=req.body.surname;
@@ -31,38 +39,36 @@ app.post("/display", (req, res) =>
   let account_type=req.body.acc_type;
   let firstPublicKey,secondPublicKey,firstSecretKey,airDropSignature,transferSignature,db_name,db_surname,db_mail,db_pubkey,db_seckey,encrypted_sec_key,decrypted_sec_key,seckey_hex,dec_seckey_hex,originalArray;
 
-  (async () => 
-  {
+  (async () => {
     // Connect to cluster
     console.log(web3.clusterApiUrl('devnet'))
     const connection = new web3.Connection(
       web3.clusterApiUrl('devnet'),
       'confirmed',
     );
-    
-    //Creating the account 
+
+    //Creating the account
     let from;
     ({ from, firstPublicKey, firstSecretKey } = createAccount(firstPublicKey, firstSecretKey));
 
     let balance= await getBalance(connection,from.publicKey);
     console.log("Balance="+balance);
     airDropSignature = await airdropAccount(airDropSignature, connection, from);
-    
+
     // Transfer SOL to random account
     ({ secondPublicKey, transferSignature } = await transferOperation(secondPublicKey, from, transferSignature, connection));
       console.log("transferSignature="+transferSignature);
     ({seckey_base}= conversions(from));
+
     //Encrypted from bs58
     ({ encrypted_sec_key, decrypted_sec_key } = await encryptions(seckey_base));
-     databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key,res);
-      //console.log(response);
-  })();
 
-  //let finalString = printData(db_mail, db_name, db_surname, db_pubkey, db_seckey, seckey_hex, seckey_base, encrypted_sec_key, decrypted_sec_key, dec_seckey_hex, originalArray, airDropSignature, firstPublicKey, secondPublicKey, transferSignature);
-  //res.send(finalString);
+     databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res);
+  })();
 });
 
-const encrypt = (text) => 
+
+const encrypt = (text) =>
 {
   const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
   const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
@@ -72,17 +78,21 @@ const encrypt = (text) =>
   };
 };
 
-const decrypt = (hash) => 
+
+const decrypt = (hash) =>
 {
   const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
   const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
   return decrpyted.toString();
 };
 
-async function transferOperation(secondPublicKey, from, transferSignature, connection) 
+
+// SOL TRANSFER FUNCTION (NOT USED IN THIS EXAMPLE)
+async function transferOperation(secondPublicKey, from, transferSignature, connection)
 {
   const to = web3.Keypair.generate();
   secondPublicKey = to.publicKey.toString();
+
   // Add transfer instruction to transaction
   const transaction = new web3.Transaction().add(
     web3.SystemProgram.transfer({
@@ -101,16 +111,20 @@ async function transferOperation(secondPublicKey, from, transferSignature, conne
   return { secondPublicKey, transferSignature };
 }
 
+
+// SOL AIRDROP FUNCTION (NOT USED IN THIS EXAMPLE)
 async function airdropAccount(airDropSignature, connection, from) {
   airDropSignature = await connection.requestAirdrop(
     from.publicKey,
     web3.LAMPORTS_PER_SOL
   );
+
   await connection.confirmTransaction(airDropSignature);
   return airDropSignature;
 }
 
-function createAccount(firstPublicKey, firstSecretKey) 
+
+function createAccount(firstPublicKey, firstSecretKey)
 {
   const from = web3.Keypair.generate();
   firstPublicKey = from.publicKey.toString();
@@ -118,7 +132,8 @@ function createAccount(firstPublicKey, firstSecretKey)
   return { from, firstPublicKey, firstSecretKey };
 }
 
-async function encryptions(seckey_base) 
+
+async function encryptions(seckey_base)
 {
   let encrypted_sec_key;
   let decrypted_sec_key
@@ -128,93 +143,66 @@ async function encryptions(seckey_base)
   return { encrypted_sec_key, decrypted_sec_key };
 }
 
-async function databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key,res) 
+
+async function databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res)
 {
-  var returnVar = {};
-  MongoClient.connect(url, function(err, db) {
-    if (err)
-        throw err;
-    var dbo = db.db("Inherit");
     var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
 
-    var firstPromise = () => 
-    {
-      return new Promise((resolve,reject) => 
+
+    // USING PROMISES FOR TESTING PURPOSES
+    // AIM OF THIS USAGE IS TO EXECUTE CODE SEQUENTIALLY i.e. AFTER THE INSERTION OF DATA
+    var insertPromise = () => {
+      return new Promise((resolve,reject) =>
       {
         console.log("Insert start");
-        dbo.collection("account").insertOne(myobj, function (err, res) 
-        {
-          if (err)
-            throw err;
-          console.log("1 document inserted");
-          resolve('Test');
+        mongo.insertAccount(myobj).then((insertResult) => {
+          console.log(insertResult)
+          resolve("Insert Completed")
         });
       })
     };
-    var callMyPromise = async() => {
-      await(firstPromise());
-      console.log("Insert end");
-      //db.close();
-      return 'ok';
-    }
-    callMyPromise().then(function(result){
-      console.log('here')
-      findAccount(myobj.email, dbo).then(function(response)
-      {
-        returnVar = response;
-        //res.send("Done");
-        return response;
-      });
+
+    insertPromise().then((message) => {
+      console.log(message);
+      console.log("Find Started")
+      mongo.findAccount({ email: myobj.email }).then((result) => {
+        printData(result.email, result.name, result.surname, result.publicKey, decrypted_sec_key,res);
+        console.log("Find Ended")
+      })
     });
-  });
-  return returnVar;
 }
 
-function insertAccount(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, dbo) 
+
+// PRINTS DATA TO THE ACCOUNT PAGE
+function printData(db_mail, db_name, db_surname, db_pubkey, decrypted_sec_key,res)
 {
-  console.log("Insert start");
-  var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
-  
-  dbo.collection("account").insertOne(myobj, function (err, res) 
-  {
-    if (err)
-      throw err;
-    console.log("1 document inserted");
-    
-  });
-  console.log("Insert end");
-}
-
-async function findAccount(email, dbo)
-{
-    console.log("Find start");
-    var query = { email: email };
-
-    const result = dbo.collection("account").find(query);
-
-    await result.forEach(document => 
-      {
-        db_name = document.name;
-        db_mail = document.email;
-        db_surname = document.surname;
-      });
-
-    console.log("db_name="+db_name);
-    console.log("Find End");
-  
-  return {db_name, db_mail, db_surname};
+  let finalString ="<h1>Account Created Successfully!</h1>";
+  finalString += "</br>";
+  finalString += "Name";
+  finalString += "</br>";
+  finalString += db_name;
+  finalString += "</br>";
+  finalString += "Surname";
+  finalString += "</br>";
+  finalString += db_surname;
+  finalString += "</br>";
+  finalString += "Email";
+  finalString += "</br>";
+  finalString += db_mail;
+  finalString += "</br>";
+  finalString += "Public Key";
+  finalString += "</br>";
+  finalString += db_pubkey;
+  finalString += "</br>";
+  finalString += "Secret Key";
+  finalString += "</br>";
+  finalString += decrypted_sec_key;
+  finalString += "</br>";
+  res.send(finalString);
 }
 
 
-//This function is used to fetch the account balance
-async function getBalance(connection,publicKey)
-{
-  const balance =await connection.getBalance(publicKey);
-  console.log(balance);
-  return balance;
-}
-
-function conversions(from) 
+function conversions(from)
 {
   //HEX from Uint8
   //HEX representation of secret key,because from.secretKey gives us Uint8Array
