@@ -1,5 +1,5 @@
 module.exports = {
-    DBURL : "mongodb+srv://admin:admin@cluster0.fozkz.mongodb.net/Inherit?retryWrites=true&w=majority",
+    DBURL : "mongodb://conestoga:Testing123@3.98.221.213:27017/?authSource=sample-db&readPreference=primaryPreferred&appname=MongoDB%20Compass&directConnection=true&ssl=false",
     DBNAME : "Inherit",
     TALBENAMES : {ACCOUNT:"account",FILE:"file"},
     HEX : 'hex',
