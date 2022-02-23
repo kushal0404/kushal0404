@@ -201,6 +201,10 @@ function printData(db_mail, db_name, db_surname, db_pubkey, decrypted_sec_key,re
   res.send(finalString);
 }
 
+function getBalance(connection,fromPubkey)
+{
+  return connection.getBalance(fromPubkey);
+}
 
 function conversions(from)
 {
@@ -221,6 +225,6 @@ function conversions(from)
   return { seckey_base};
 }
 
-app.use('/fileApi', require('./api/fileApi'));
+//app.use('/fileApi', require('./api/fileApi'));
 
 app.listen(3000, () => console.log(`App listening on port 3000`))
