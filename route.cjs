@@ -234,5 +234,6 @@ function conversions(from)
 }
 
 app.use('/fileApi', require('./api/fileApi'));
+app.use('/', require('./api/commonApi'));
 
 app.listen(3000, () => console.log(`App listening on port 3000`))

@@ -52,9 +52,9 @@ router.get('/', async function(req, res){
 
 
    // file save  (limited 100Mb)
-    var busboy = new Busboy({ headers: req.headers,limits: {fileSize: 100*1024*1024} });
+   var busboy = new Busboy({ headers: req.headers,limits: {fileSize: 100*1024*1024} });
 
-    let tmpDir = os.tmpdir();
+   let tmpDir = os.tmpdir();
 
     busboy.on('field', function(fieldname, val) {
       fields[fieldname] = val;
@@ -109,7 +109,7 @@ router.get('/download', async function (req, res) {
     console.log(result);
 
     // User check using personal public key in MongoDB
-    
+    //let userInfo = await db.find(df.TALBENAMES.ACCOUNT, {"publicKey":req.query.publicKey});
 
     // File_id check in MongoDB
     let fileData = await db.find(df.TALBENAMES.FILE, {fileId : req.query.fileId});
