@@ -8,7 +8,7 @@ const client = new MongoClient(uri);
 client.connect();
 
 const db = client.db(dbName);
-const collection = db.collection('account-data');
+const collection = db.collection('account_data');
 
 const insertAccount = async (obj) => {
   return new Promise(async (resolve, reject) => {
@@ -26,8 +26,8 @@ const insertAccount = async (obj) => {
 
 const findAccount = (query) => {
   return new Promise(async (resolve, reject) => {
-  const result = await collection.findOne(query);
-  resolve(result);
+    const result = await collection.findOne(query);
+    resolve(result);
   })
 }
 
@@ -41,9 +41,22 @@ const modifyRecord = async (user_id, newRecord) => {
   });
 };
 
+const getSecretKey = async (email) => {
+  var qry = {user_email: email};
+  const projection = {private_key: 1}
+
+  return new Promise(async (resolve, reject) => {
+    const result = await collection.find(qry).project(projection);
+    result.forEach((res) => {
+      resolve(res.private_key)
+    });
+  })
+}
+
 
 module.exports = {
   insertAccount: insertAccount,
   modifyRecord: modifyRecord,
-  findAccount: findAccount
+  findAccount: findAccount,
+  getSecretKey: getSecretKey
 }

@@ -1,12 +1,14 @@
 var express = require('express');
 var MongoClient = require('mongodb').MongoClient;
 const bodyParser = require("body-parser");
-const web3 = require("@solana/web3.js");
 const bs58 = require('bs58');
 const crypto = require('crypto');
+const web3 = require("@solana/web3.js");
 
 // IMPORT MONGODB MODULE
 const mongo = require('./src/js/mongo.cjs');
+
+const solanaOps = require('./src/js/solanaOps.cjs');
 
 const algorithm = 'aes-256-ctr';
 const secretKey = 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzkz9';
@@ -40,29 +42,26 @@ app.post("/display", (req, res) =>
   let firstPublicKey,secondPublicKey,firstSecretKey,airDropSignature,transferSignature,db_name,db_surname,db_mail,db_pubkey,db_seckey,encrypted_sec_key,decrypted_sec_key,seckey_hex,dec_seckey_hex,originalArray;
 
   (async () => {
-    // Connect to cluster
-    console.log(web3.clusterApiUrl('devnet'))
-    const connection = new web3.Connection(
-      web3.clusterApiUrl('devnet'),
-      'confirmed',
-    );
 
     //Creating the account
-    let from;
-    ({ from, firstPublicKey, firstSecretKey } = createAccount(firstPublicKey, firstSecretKey));
+    let from, publicKey, secretKey;
+    ({ from, publicKey, secretKey } = createAccount());
 
-    ({seckey_base}= conversions(from));
+    //Convert secret key to hex
+    ({ seckey_hex } = conversions(from));
 
-    //Encrypted from bs58
-    ({ encrypted_sec_key, decrypted_sec_key } = await encryptions(seckey_base));
+    //Encrypted from hex
+    encrypted_sec_key  = await encryptions(seckey_hex);
 
-     databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res);
+    databaseOperations(name, surname, email, account_type, firstPublicKey, encrypted_sec_key, res);
+
+    solanaOps.transferOperation()
+
   })();
 });
 
 
-const encrypt = (text) =>
-{
+const encrypt = (text) => {
   const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
   const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
   return {
@@ -72,37 +71,11 @@ const encrypt = (text) =>
 };
 
 
-const decrypt = (hash) =>
-{
+const decrypt = (hash) => {
   const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
   const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
   return decrpyted.toString();
 };
-
-
-// SOL TRANSFER FUNCTION (NOT USED IN THIS EXAMPLE)
-async function transferOperation(secondPublicKey, from, transferSignature, connection)
-{
-  const to = web3.Keypair.generate();
-  secondPublicKey = to.publicKey.toString();
-
-  // Add transfer instruction to transaction
-  const transaction = new web3.Transaction().add(
-    web3.SystemProgram.transfer({
-      fromPubkey: from.publicKey,
-      toPubkey: to.publicKey,
-      lamports: web3.LAMPORTS_PER_SOL / 100,
-    })
-  );
-
-  // Sign transaction, broadcast, and confirm
-  transferSignature = await web3.sendAndConfirmTransaction(
-    connection,
-    transaction,
-    [from]
-  );
-  return { secondPublicKey, transferSignature };
-}
 
 
 // SOL AIRDROP FUNCTION (NOT USED IN THIS EXAMPLE)
@@ -126,18 +99,20 @@ function createAccount(firstPublicKey, firstSecretKey)
 }
 
 
-async function encryptions(seckey_base)
+async function encryptions(seckey_hex)
 {
   let encrypted_sec_key;
   let decrypted_sec_key
-  encrypted_sec_key = encrypt(seckey_base);
-  //Decrypted from Encrypted that will give bs58
-  decrypted_sec_key = decrypt(encrypted_sec_key);
-  return { encrypted_sec_key, decrypted_sec_key };
+  encrypted_sec_key = encrypt(seckey_hex);
+
+  //Decrypted from Encrypted that will give hex
+  //decrypted_sec_key = decrypt(encrypted_sec_key);
+
+  return { encrypted_sec_key };
 }
 
 
-async function databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res)
+async function databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key,res)
 {
     var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
 
@@ -157,17 +132,17 @@ async function databaseOperations(name, surname, email, account_type, firstPubli
 
     insertPromise().then((message) => {
       console.log(message);
-      console.log("Find Started")
-      mongo.findAccount({ email: myobj.email }).then((result) => {
-        printData(result.email, result.name, result.surname, result.publicKey, decrypted_sec_key,res);
-        console.log("Find Ended")
-      })
+      //console.log("Find Started")
+      //mongo.findAccount({ email: myobj.email }).then((result) => {
+        //printData(result.email, result.name, result.surname, result.publicKey, res);
+        //console.log("Find Ended")
+      //})
     });
 }
 
 
 // PRINTS DATA TO THE ACCOUNT PAGE
-function printData(db_mail, db_name, db_surname, db_pubkey, decrypted_sec_key,res)
+function printData(db_mail, db_name, db_surname, db_pubkey, decrypted_sec_key, res)
 {
   let finalString ="<h1>Account Created Successfully!</h1>";
   finalString += "</br>";
@@ -195,8 +170,7 @@ function printData(db_mail, db_name, db_surname, db_pubkey, decrypted_sec_key,re
 }
 
 
-function conversions(from)
-{
+function conversions(from) {
   //HEX from Uint8
   //HEX representation of secret key,because from.secretKey gives us Uint8Array
   let seckey_hex = Buffer.from(from.secretKey).toString('hex');
@@ -211,7 +185,8 @@ function conversions(from)
 
   const fromHexString = dec_seckey_hex => new Uint8Array(dec_seckey_hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
   let originalArray = fromHexString(dec_seckey_hex);
-  return { seckey_base};
+
+  return { seckey_hex };
 }
 
 app.listen(3000, () => console.log(`App listening on port 3000`))
