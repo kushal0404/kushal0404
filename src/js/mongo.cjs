@@ -9,6 +9,7 @@ client.connect();
 
 const db = client.db(dbName);
 const collection = db.collection('account_data');
+const meta_collection = db.collection('metadata');
 
 const insertAccount = async (obj) => {
   return new Promise(async (resolve, reject) => {
@@ -52,11 +53,33 @@ const getSecretKey = async (email) => {
     });
   })
 }
+const insertMetadata = async (obj) => {
+  return new Promise(async (resolve, reject) => {
+    const insertResult = await meta_collection.insertOne(obj, function (err, res) {
+      if (err) {
+        throw err;
+        reject("Document didn't insert")
+      }
+
+      console.log("ObjectId: "+ res.insertedId);
+      resolve(res);
+    });
+  })
+};
+
+const findMetaData = (query) => {
+  return new Promise(async (resolve, reject) => {
+  const result = await meta_collection.findOne(query);
+  resolve(result);
+  })
+}
 
 
 module.exports = {
   insertAccount: insertAccount,
   modifyRecord: modifyRecord,
   findAccount: findAccount,
-  getSecretKey: getSecretKey
+  getSecretKey: getSecretKey,
+  insertMetadata: insertMetadata,
+  findMetaData:findMetaData
 }
