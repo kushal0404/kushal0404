@@ -53,17 +53,30 @@ app.post("/display", (req, res) =>
 
     let balance= await getBalance(connection,from.publicKey);
     console.log("Balance="+balance);
-    airDropSignature = await airdropAccount(airDropSignature, connection, from);
+    /* airDropSignature = await airdropAccount(airDropSignature, connection, from);
 
     // Transfer SOL to random account
     ({ secondPublicKey, transferSignature } = await transferOperation(secondPublicKey, from, transferSignature, connection));
-      console.log("transferSignature="+transferSignature);
+      console.log("transferSignature="+transferSignature); */
     ({seckey_base}= conversions(from));
 
     //Encrypted from bs58
     ({ encrypted_sec_key, decrypted_sec_key } = await encryptions(seckey_base));
 
-     databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res);
+    let params=
+    {
+      name:name,
+      surname:surname,
+      email:email,
+      account_type:account_type,
+      firstPublicKey:firstPublicKey,
+      encrypted_sec_key:encrypted_sec_key,
+      decrypted_sec_key:decrypted_sec_key,
+      res:res,
+      from:from,
+      connection:connection
+    }
+     databaseOperations(params);
   })();
 });
 
@@ -144,61 +157,99 @@ async function encryptions(seckey_base)
 }
 
 
-async function databaseOperations(name, surname, email, account_type, firstPublicKey,encrypted_sec_key, decrypted_sec_key,res)
+async function databaseOperations(params)
 {
-    var myobj = { name: name, surname: surname, email: email, account_type: account_type, publicKey: firstPublicKey, secret_key: encrypted_sec_key };
-
-
-    // USING PROMISES FOR TESTING PURPOSES
-    // AIM OF THIS USAGE IS TO EXECUTE CODE SEQUENTIALLY i.e. AFTER THE INSERTION OF DATA
-    var insertPromise = () => {
-      return new Promise((resolve,reject) =>
-      {
-        console.log("Insert start");
-        mongo.insertAccount(myobj).then((insertResult) => {
-          console.log(insertResult)
-          resolve("Insert Completed")
-        });
+  
+    var buildInsertObjPromise= ()=>{
+      return new Promise((resolve,reject) =>{
+        buildInsertObj(params).then((insertObj)=>{
+          resolve(insertObj)
+        })
       })
     };
 
-    insertPromise().then((message) => {
-      console.log(message);
-      console.log("Find Started")
-      mongo.findAccount({ email: myobj.email }).then((result) => {
-        printData(result.email, result.name, result.surname, result.publicKey, decrypted_sec_key,res);
-        console.log("Find Ended")
-      })
-    });
+    buildInsertObjPromise().then((insertObj)=>
+    {
+      // USING PROMISES FOR TESTING PURPOSES
+      // AIM OF THIS USAGE IS TO EXECUTE CODE SEQUENTIALLY i.e. AFTER THE INSERTION OF DATA
+      var insertPromise = () => {
+        return new Promise((resolve,reject) =>
+        {
+          console.log("Insert start");
+          mongo.insertAccount(insertObj).then((insertResult) => {
+            console.log(insertResult)
+            resolve("Insert Completed")
+          });
+        })
+      };
+
+      insertPromise().then((message) => 
+      {
+        console.log(message);
+        console.log("Find Started "+insertObj.user_email);
+        mongo.findAccount({ user_email: insertObj.user_email }).then((result) => {
+          printData(result,params);
+          console.log("Find Ended")
+        })
+      });
+    })
 }
 
 
+async function buildInsertObj(params) 
+{
+  let balance = await getBalance(params.connection, params.from.publicKey);
+  balance = balance / 1000000000;
+  var insertObj = {
+    user_name: params.name,
+    user_surname: params.surname,
+    user_email: params.email,
+    user_password:params.name+123,
+    user_phone: "5147083259",
+    user_city: "Scarborough",
+    user_state: "Ontario",
+    user_country: "Canada",
+    user_postalcode: "W31W29",
+    user_role: params.account_type,
+    user_beneficiaries: "",
+    assigned_lawyer: "",
+    assigned_customers: "",
+    login_token: "",
+    account_type: params.account_type,
+    public_key: params.firstPublicKey,
+    private_key: params.encrypted_sec_key,
+    registered_firm: "Inherit",
+    wallet_balance: balance
+  };
+  return insertObj;
+}
+
 // PRINTS DATA TO THE ACCOUNT PAGE
-function printData(db_mail, db_name, db_surname, db_pubkey, decrypted_sec_key,res)
+function printData(result,params)
 {
   let finalString ="<h1>Account Created Successfully!</h1>";
   finalString += "</br>";
   finalString += "Name";
   finalString += "</br>";
-  finalString += db_name;
+  finalString += result.user_name;
   finalString += "</br>";
   finalString += "Surname";
   finalString += "</br>";
-  finalString += db_surname;
+  finalString += result.user_surname;
   finalString += "</br>";
   finalString += "Email";
   finalString += "</br>";
-  finalString += db_mail;
+  finalString += result.user_email;
   finalString += "</br>";
   finalString += "Public Key";
   finalString += "</br>";
-  finalString += db_pubkey;
+  finalString += result.public_key;
   finalString += "</br>";
   finalString += "Secret Key";
   finalString += "</br>";
-  finalString += decrypted_sec_key;
+  finalString += params.decrypted_sec_key;
   finalString += "</br>";
-  res.send(finalString);
+  params.res.send(finalString);
 }
 
 function getBalance(connection,fromPubkey)
@@ -226,6 +277,5 @@ function conversions(from)
 }
 
 app.use('/fileApi', require('./api/fileApi'));
-app.use('/', require('./api/commonApi'));
 
 app.listen(3000, () => console.log(`App listening on port 3000`))
