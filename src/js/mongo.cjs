@@ -56,10 +56,18 @@ const insertMetadata = async (obj) => {
   })
 };
 
+const findMetaData = (query) => {
+  return new Promise(async (resolve, reject) => {
+  const result = await meta_collection.findOne(query);
+  resolve(result);
+  })
+}
+
 
 module.exports = {
   insertAccount: insertAccount,
   modifyRecord: modifyRecord,
   findAccount: findAccount,
-  insertMetadata: insertMetadata
+  insertMetadata: insertMetadata,
+  findMetaData:findMetaData
 }

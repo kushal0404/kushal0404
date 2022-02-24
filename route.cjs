@@ -224,6 +224,24 @@ async function buildInsertObj(params)
   return insertObj;
 }
 
+async function buildMetaObj(params) 
+{
+  var metaObj = {
+    lawyer_name: params.lawyer_name,
+    client_name: params.client_name,
+    lawyer_postalcode: params.lawyer_postalcode,
+    client_postalcode:client_postalcode,
+    type_of_doc: params.type_of_doc,
+    date_of_sign: params.date_of_sign,
+    mode_of_sign: params.mode_of_sign,
+    hash_of_file: params.hash_of_file,
+    file_id: params.file_id,
+    file_version: params.file_version,
+    executor_name: params.executor_name,
+  };
+  return metaObj;
+}
+
 // PRINTS DATA TO THE ACCOUNT PAGE
 function printData(result,params)
 {
