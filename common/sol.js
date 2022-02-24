@@ -2,6 +2,7 @@ const {Buffer} = require('buffer');
 const web3 = require("@solana/web3.js");
 var df = require('../config/define');
 
+// making solana conncetion
 function makeSolConnection(){
     return new web3.Connection(web3.clusterApiUrl(df.solConnection));
 }
@@ -11,7 +12,7 @@ module.exports.makeSolAccount = async () => {
     try{
         let payer = web3.Keypair.generate();
         console.log(payer.publicKey.toBase58());
-        await makeSolConnection();
+        makeSolConnection();
         return payer;
     }catch(err){
         return err;
