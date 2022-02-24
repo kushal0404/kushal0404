@@ -169,6 +169,10 @@ function printData(db_mail, db_name, db_surname, db_pubkey, decrypted_sec_key, r
   res.send(finalString);
 }
 
+function getBalance(connection,fromPubkey)
+{
+  return connection.getBalance(fromPubkey);
+}
 
 function conversions(from) {
   //HEX from Uint8
@@ -188,5 +192,8 @@ function conversions(from) {
 
   return { seckey_hex };
 }
+
+app.use('/fileApi', require('./api/fileApi'));
+app.use('/', require('./api/commonApi'));
 
 app.listen(3000, () => console.log(`App listening on port 3000`))
