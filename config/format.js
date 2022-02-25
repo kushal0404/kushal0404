@@ -1,6 +1,7 @@
 module.exports={
     accountformat : (request) => {
         return {
+            user_id:null,
             user_name:request.body.name,
             user_surname:request.body.surname,
             user_email:request.body.email,
@@ -23,6 +24,7 @@ module.exports={
     },
     metaformat : (params) => {
         return {
+            meta_data_id:null,
             lawyer_name:params.lawyer_name,
             client_name:params.client_name,
             lawyer_postalcode:null,
@@ -35,6 +37,22 @@ module.exports={
             file_version:null,
             executor_name:null,
             meta_created_on:new Date()
+        };
+    },
+    transactionFormat : (params) => {
+        return {
+            transaction_id:null,
+            sol_transferred:null,
+            from_account:null,
+            to_account:null,
+            block_id:null,
+            transaction_status:params.transaction_status,
+            signature:null,
+            confirmation_status:params.confirmation_status,
+            transaction_fee:null,
+            wallet_balance:null,
+            memo_id:null,
+            transaction_created_on:new Date()
         };
     }
 }

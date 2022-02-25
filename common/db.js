@@ -45,3 +45,12 @@ module.exports.find = async (collection, query) =>
 {
     return await db.collection(collection).findOne(query);
 };
+
+module.exports.getValueForNextSequence = async (collection) =>
+{
+    let obj=await db.collection(collection).findOne();
+    await db.collection(collection).updateOne(
+        {"seq":obj.seq},
+        {$set: { "seq" : obj.seq+1}})
+    return obj.seq;
+};
