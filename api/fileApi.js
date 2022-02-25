@@ -13,21 +13,18 @@ var path = require('path');
 var fs = require('fs');
 const crypto = require('crypto');
 const os = require('os');
-var Busboy = require('busboy');
+const Busboy = require('busboy');
 const { v4: uuidv4 } = require('uuid');
 var tools = require('../common/tools');
 var df = require('../config/define');
 const db = require('../common/db');
+const format = require('../config/format');
 db.init();
 //const ObjectId = require('mongodb').ObjectID;
 
 
 router.get('/', async function(req, res){
-
-  // DB SELECT SAMPLE
-  let products = await db.find(df.TALBENAMES.ACCOUNT, null);
-  //console.log(JSON.stringify(products));
-
+  
     res.send('<html><head></head><body>\
       <form method="POST" enctype="multipart/form-data">\
       <input type="text" name="textfield"><br />\
@@ -52,9 +49,14 @@ router.get('/', async function(req, res){
 
 
    // file save  (limited 100Mb)
-   var busboy = new Busboy({ headers: req.headers,limits: {fileSize: 100*1024*1024} });
+   var busboy = Busboy({ headers: req.headers,limits: {fileSize: 100*1024*1024} });
 
    let tmpDir = os.tmpdir();
+
+    const saveTo = path.join(df.fileSavePath);
+    if (!fs.existsSync(saveTo)) {
+      fs.mkdirSync(saveTo);
+    }
 
     busboy.on('field', function(fieldname, val) {
       fields[fieldname] = val;
