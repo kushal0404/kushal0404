@@ -40,7 +40,7 @@ module.exports.deleteOne = async (collection, object) => {
     return await db.collection(collection).deleteOne(object);
 };
 
-// Get all entries
+// Get first matching entry
 module.exports.find = async (collection, query) =>
 {
     return await db.collection(collection).findOne(query);
