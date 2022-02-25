@@ -1,17 +1,20 @@
 /**
- * Created by Jakeom 
+ * Created by Jakeom
  * Description : File upload and download
- * 
+ *
  * Create Time : 16/02/2022
- * update Time : 16/02/2022 Updated by Jakeom 
+ * update Time : 16/02/2022 Updated by Jakeom
  */
 var crypto = require('crypto');
 var path = require('path');
+const bs58 = require('bs58');
 var fs = require('fs');
 const ipInfo = require("ipinfo")
 const archiver = require('archiver');
 const { v4: uuidv4 } = require('uuid');
 var df = require('../config/define');
+const algorithm = 'aes-256-ctr';
+const iv = crypto.randomBytes(16);
 module.exports = {
 
     /**
@@ -19,36 +22,36 @@ module.exports = {
      * @returns {String} Encrypted File text
      */
     encrypt :function (text) {
-        
+
         // Creating Cipheriv with its parameter
         let cipher = crypto.createCipheriv(
         df.fileEnalgo, Buffer.from(df.mainEnKey), df.mainEnIv);
-        
+
         // Updating text
         let encrypted = cipher.update(text);
-        
+
         // Using concatenation
         encrypted = Buffer.concat([encrypted, cipher.final()]);
-        
+
         // Returning iv and encrypted data
         return encrypted.toString(df.HEX);
     },
-    
+
     /**
      * @param {text} base64 text
      * @returns {String} Edcrypted File text
      */
     decrypt : function (text) {
         let encryptedText = Buffer.from(text, df.HEX);
-        
+
         // Creating Decipher
         let decipher = crypto.createDecipheriv(
         df.fileEnalgo, Buffer.from(df.mainEnKey), df.mainEnIv);
-        
+
         // Updating encrypted text
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
-        
+
         // returns data after decryption
         return decrypted.toString();
     },
@@ -59,14 +62,14 @@ module.exports = {
      */
     makeEncryptedFile : function (tempSaveTo){
         var fileId = null;
-        
+
         if(fs.readFileSync(tempSaveTo).length != 0){
             // file to base64 string
             const contents = fs.readFileSync(tempSaveTo, {encoding: df.BASE64});
-            
+
             // encryted text
             var output = this.encrypt(contents);
-        
+
             // make real file path
             fileId = uuidv4();
             const saveTo = path.join(df.fileSavePath, fileId);
@@ -76,8 +79,8 @@ module.exports = {
         }
         // remove Temporary File
         fs.unlinkSync(tempSaveTo,function(err){
-        if(err) return console.log(err);});  
-    
+        if(err) return console.log(err);});
+
         return fileId;
     },
 
@@ -92,7 +95,7 @@ module.exports = {
         //console.log('File decrypt');
         //let updateFinal = output.split(';base64,').pop();
         //fs.writeFileSync(outputFilename, updateFinal, {encoding: 'base64'}, function(err) {});
-        
+
         return output;
     },
 
@@ -104,21 +107,21 @@ module.exports = {
     zipDirectory :function (sourceDir, outPath){
         const archive = archiver('zip', { zlib: { level: 9 }});
         const stream = fs.createWriteStream(outPath);
-      
+
         return new Promise((resolve, reject) => {
           archive
             .directory(sourceDir, false)
             .on('error', err => reject(err))
             .pipe(stream)
           ;
-      
+
           stream.on('close', () => resolve());
           archive.finalize();
         });
     },
 
     /**
-     * Get IpInformation 
+     * Get IpInformation
      * @returns {Promise}
      */
      getIpInfo :function (){
@@ -131,6 +134,22 @@ module.exports = {
                 }
             });
         });
+    },
+    encryptSecretKey :function (secretKey)
+    {
+        let seckey_base = bs58.encode(secretKey);
+        const cipher = crypto.createCipheriv(algorithm, df.secretKey, iv);
+        const encrypted = Buffer.concat([cipher.update(seckey_base), cipher.final()]);
+        return {
+            iv: iv.toString('hex'),
+            content: encrypted.toString('hex')
+        };
+    },
+    decryptSecretKey :function (hash)
+    {
+        const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
+        const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+        return decrpyted.toString();
     }
 };
 

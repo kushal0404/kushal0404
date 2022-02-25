@@ -11,7 +11,6 @@ function makeSolConnection(){
 module.exports.makeSolAccount = async () => {
     try{
         let payer = web3.Keypair.generate();
-        console.log(payer.publicKey.toBase58());
         makeSolConnection();
         return payer;
     }catch(err){
@@ -19,13 +18,23 @@ module.exports.makeSolAccount = async () => {
     }
 };
 
-
 // Check account balance on Solana
-module.exports.checkAccountBalance = async (pk) => {
+module.exports.checkAccountBalance = async (publickey) => {
     try{
-        return await makeSolConnection().getAccountInfo(new web3.PublicKey(pk));
+        return await makeSolConnection().getBalance(publickey);
     }catch(err){
         return err;
     }
 };
 
+// create account on Solana
+module.exports.transferSOL = async (fromPubkey,toPublicKey) =>
+{
+    try
+    {
+        //logic
+        return payer;
+    }catch(err){
+        return err;
+    }
+};

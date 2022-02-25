@@ -1,7 +1,7 @@
 /**
- * Created by Jakeom 
+ * Created by Jakeom
  * Description : DB connection
- * 
+ *
  * Create Time : 16/02/2022
  * update Time : 16/02/2022
  */
@@ -41,6 +41,7 @@ module.exports.deleteOne = async (collection, object) => {
 };
 
 // Get all entries
-module.exports.find = async (collection, object) => {
-    return await db.collection(collection).find(object).toArray();
+module.exports.find = async (collection, query) =>
+{
+    return await db.collection(collection).findOne(query);
 };

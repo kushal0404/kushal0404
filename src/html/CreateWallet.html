@@ -8,7 +8,7 @@
 </head>
 <body>
 <div id="mainFormDiv">
-  <form id="mainForm" method="post" class="row g-3" action="/display">
+  <form id="mainForm" method="post" class="row g-3" action="/createwallet">
     <div class="col-12">
       <label class="form-label">Name</label>
       <input type="text" class="form-control" name="name" id="name">
@@ -23,8 +23,8 @@
     </div>
     <div class="col-12">
       <label class="form-label">Account type:</label>
-      <input type="radio" name="acc_type" value="client" id="client">Client
-      <input type="radio" name="acc_type" value="lawyer" id="lawyer">Lawyer
+      <input type="radio" name="acc_type" value="C" id="client">Client
+      <input type="radio" name="acc_type" value="L" id="lawyer">Lawyer
     </div>
     <div class="col-12">
       <button id="submitBtn" type="submit" class="btn btn-success" >Create</button>
