@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const web3 = require("@solana/web3.js");
 
 // IMPORT MONGODB MODULE
-const mongo = require('./src/js/mongo.cjs');
+const sol = require('./common/sol.js');
 
 //const solanaOps = require('./src/js/solanaOps.cjs');
 
@@ -26,19 +26,6 @@ app.get('/',function(req,res)
   console.log("------------------------------------"+__dirname);
   res.sendFile(__dirname + '/src/html/CreateWallet.html');
 });
-const encrypt = (text) => {
-  const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
-  const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
-  return {
-      iv: iv.toString('hex'),
-      content: encrypted.toString('hex')
-  };
-};
-const decrypt = (hash) => {
-  const decipher = crypto.createDecipheriv(algorithm, secretKey, Buffer.from(hash.iv, 'hex'));
-  const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
-  return decrpyted.toString();
-};
 
 
 // SOL AIRDROP FUNCTION (NOT USED IN THIS EXAMPLE)
@@ -52,26 +39,6 @@ async function airdropAccount(airDropSignature, connection, from) {
   return airDropSignature;
 }
 
-function createAccount(firstPublicKey, firstSecretKey)
-{
-  const from = web3.Keypair.generate();
-  firstPublicKey = from.publicKey.toString();
-  firstSecretKey = from.secretKey.toString();
-  return { from, firstPublicKey, firstSecretKey };
-}
-
-
-async function encryptions(seckey_hex)
-{
-  let encrypted_sec_key;
-  let decrypted_sec_key
-  encrypted_sec_key = encrypt(seckey_hex);
-
-  //Decrypted from Encrypted that will give hex
-  //decrypted_sec_key = decrypt(encrypted_sec_key);
-
-  return { encrypted_sec_key };
-}
 
 
 async function databaseOperations(params)
@@ -159,16 +126,17 @@ function conversions(from) {
 
   //HEX from bs58
   //HEX from bs58 representation of secret key
-  let dec_seckey_hex = bs58.decode(seckey_base).toString('hex');
+  let dec_seckey_hex = bs58.decode(from).toString('hex');
 
   const fromHexString = dec_seckey_hex => new Uint8Array(dec_seckey_hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
   let originalArray = fromHexString(dec_seckey_hex);
 
-  return { seckey_hex };
+  return { originalArray };
 }
 
 app.use('/', require('./api/commonApi'));
 app.use('/fileApi', require('./api/fileApi'));
 app.post('/createwallet', require('./api/createwallet.cjs'));
+app.get('/transfer', require("./api/solanaApi.js"));
 
 app.listen(3000, () => console.log(`App listening on port 3000`))
