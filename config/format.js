@@ -54,5 +54,19 @@ module.exports={
             memo_id:null,
             transaction_created_on:new Date()
         };
-    }
+    },
+    fileFormat: (params) => {
+        return {
+          file_id:null,
+          public_key : null,
+          file_name : null,
+          mimetype : null,
+          file_type : null,
+          version_number : null,
+          file_hash : null,
+          uploaded_on :  new Date(),
+          created_on : new Date()
+        };
+    },
+
 }
