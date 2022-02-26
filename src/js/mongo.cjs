@@ -42,17 +42,21 @@ const modifyRecord = async (user_id, newRecord) => {
   });
 };
 
-const getSecretKey = async (email) => {
-  var qry = {user_email: email};
-  const projection = {private_key: 1}
+const getSecretKey = async (pubkey) => {
+
+  var qry = {"public_key": pubkey};
+  console.log("mongo function")
+  const projection = {"projection": {"private_key": 1}}
 
   return new Promise(async (resolve, reject) => {
-    const result = await collection.find(qry).project(projection);
-    result.forEach((res) => {
-      resolve(res.private_key)
+    console.log("promise")
+    const result = await collection.findOne(qry, projection);
+    result.then((res) => {
+      console.log("res:", res)
     });
   })
 }
+
 const insertMetadata = async (obj) => {
   return new Promise(async (resolve, reject) => {
     const insertResult = await meta_collection.insertOne(obj, function (err, res) {

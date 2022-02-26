@@ -39,4 +39,9 @@ async function getKeyPairFromSecretKey(secretKey)
     return Keypair.fromSecretKey(account.secretKey)
 }
 
+async function insertMeta(insertAccountObj)
+{
+    return await db.insertOne(df.TALBENAMES.ACCOUNT,insertAccountObj);
+}
+
 module.exports = routerObj;

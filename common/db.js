@@ -10,6 +10,8 @@ const df = require('../config/define');
 let client;
 let db;
 
+const mongo = require("../src/js/mongo.cjs")
+
 // Initialize Mongo Client
 module.exports.init = async () => {
     client = new MongoClinet(df.DBURL, {useNewUrlParser: true});
@@ -53,4 +55,14 @@ module.exports.getValueForNextSequence = async (collection) =>
         {"seq":obj.seq},
         {$set: { "seq" : obj.seq+1}})
     return obj.seq;
+  }
+  
+module.exports.getSecretKey = async (collection, pubkey) => {
+  var qry = {"public_key": pubkey};
+  const projection = {"projection": {"private_key": 1}}
+
+  return new Promise(async (resolve, reject) => {
+    const result = await db.collection(collection).findOne(qry, projection);
+    resolve(result)
+  })
 };
