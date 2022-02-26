@@ -50,59 +50,15 @@ function conversions(from) {
 }
 
 // transfer sol
-module.exports.transferSOL = async (fromPubkey, toPublicKey) =>
+module.exports.transferSOL = async (from, to, solToTransfer) =>
 {
-    try
-    {
-        //logic
-        //initialize secret key variable
-        var fromSecKey = '';
-
-        // fetch secret key for 'from' account from mongo
-        const private_key = db.getSecretKey("account_data", fromPubkey)
-
-        private_key.then(async pkey => {
-
-          // decrypt private key
-          fromSecKey = tools.decryptSecretKey(pkey.private_key);
-
-          // convert private key from bs58 to unit array
-          skey = conversions(fromSecKey)
-
-          // create solana keypair object
-          from = web3.Keypair.fromSecretKey(skey.originalArray);
-
-          // create solana connection
-          const connection = new web3.Connection(
-            web3.clusterApiUrl('devnet'),
-            'confirmed',
-          );
-
-
-          // define publick keys for from and to account
-          fromPubKey = from.publicKey
-          toPubKey = new web3.PublicKey(toPublicKey);
-
-          // Add transfer instruction to transaction
-          const transaction = new web3.Transaction().add(
-            web3.SystemProgram.transfer({
-              fromPubkey: fromPubKey,
-              toPubkey: toPubKey,
-              lamports: web3.LAMPORTS_PER_SOL / 100,
-            })
-          );
-
-          // Sign transaction, broadcast, and confirm
-          const transferSignature = await web3.sendAndConfirmTransaction(
-            connection,
-            transaction,
-            [from]
-          );
-          return { transferSignature };
-          // transfer can be checked on solana explorer by searching for
-          // the from/to account and looking at the transaction
-      });
-    } catch(err) {
-        return err;
-    }
+  let transaction = new web3.Transaction();
+  // Add an instruction to execute
+  transaction.add(web3.SystemProgram.transfer({
+    fromPubkey: from.publicKey,
+    toPubkey: to.publicKey,
+    lamports: solToTransfer,
+  }));
+  let signature=await web3.sendAndConfirmTransaction(makeSolConnection(), transaction, [from]);
+  return signature;
 };

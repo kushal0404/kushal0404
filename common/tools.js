@@ -14,7 +14,9 @@ const archiver = require('archiver');
 const { v4: uuidv4 } = require('uuid');
 var df = require('../config/define');
 const algorithm = 'aes-256-ctr';
+const {Keypair} = require("@solana/web3.js")
 const iv = crypto.randomBytes(16);
+const LAMPORTS_PER_SOL=1000000000;
 module.exports = {
 
     /**
@@ -150,5 +152,13 @@ module.exports = {
         const decipher = crypto.createDecipheriv(algorithm, df.secretKey, Buffer.from(hash.iv, 'hex'));
         const decrpyted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
         return decrpyted.toString();
+    },
+    getKeypairFromSecretKey:function (secretKey)
+    {
+        let dec_seckey_hex = bs58.decode(secretKey).toString('hex');
+        const fromHexString = dec_seckey_hex => new Uint8Array(dec_seckey_hex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        let sec_key_array = fromHexString(dec_seckey_hex);
+        let keypair=Keypair.fromSecretKey(sec_key_array);
+        return keypair;
     }
 };
