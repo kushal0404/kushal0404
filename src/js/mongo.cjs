@@ -43,8 +43,7 @@ const modifyRecord = async (user_id, newRecord) => {
 };
 
 const getSecretKey = async (pubkey) => {
-  //var qry = {user_email: email};
-  //const projection = {private_key: 1}
+
   var qry = {"public_key": pubkey};
   console.log("mongo function")
   const projection = {"projection": {"private_key": 1}}
