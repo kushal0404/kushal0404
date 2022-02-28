@@ -12,16 +12,18 @@ let db;
 
 // Initialize Mongo Client
 module.exports.init = async () => {
-    client = new MongoClinet(df.DBURL, {useNewUrlParser: true});
+    if(client == null) {
+        client = new MongoClinet(df.DBURL, {useNewUrlParser: true});
 
-    try{
-        await client.connect();
-        console.log("connected to MongoDB");
+        try{
+            await client.connect();
+            console.log("connected to MongoDB");
 
-        db = client.db(df.DBNAME);
+            db = client.db(df.DBNAME);
 
-    }catch(err){
-        console.log(err.stack);
+        }catch(err){
+            console.log(err.stack);
+        }
     }
 };
 

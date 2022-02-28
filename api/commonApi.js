@@ -14,6 +14,7 @@
  var df = require('../config/define');
  const db = require('../common/db');
  const sol = require('../common/sol');
+ const ObjectId = require('mongodb').ObjectID;
  db.init();
  
  
@@ -32,10 +33,10 @@
         await db.updateOne(df.TALBENAMES.ACCOUNT, {"publicKey":req.query.publicKey}, userInfo[0]);
     }
 
-    console.log(await sol.makeSolAccount());
-    console.log(await sol.checkAccountBalance("A9ek8ozUxXopgoyyULH576dqxHX5vLtTDthzUjCFvPaF"));
-    console.log("sddasd");
+    // console.log(await sol.makeSolAccount());
+    // console.log(await sol.checkAccountBalance("A9ek8ozUxXopgoyyULH576dqxHX5vLtTDthzUjCFvPaF"));
 
+    console.log(await db.find(df.TALBENAMES.ACCOUNT, { _id: ObjectId("621d1d218ef5594f2cfc0a19")}));
      res.send(df.rtnformat(200,  "message field!!", {"loginToken":loginToken}));  
      res.end();
  
