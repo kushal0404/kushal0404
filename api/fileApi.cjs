@@ -127,17 +127,26 @@ router.get('/', async function(req, res){
 });
 
 router.get('/download', async function (req, res) {
-  
+
+  var fileId = req.query.file_id;
+  if(fileId == null || fileId.length == 0){
+    res.send(df.rtnformat(200,  "file_id is required", null));   
+    res.end();
+    return;
+  }
+
   const result = await tools.getIpInfo();
-  
+
     // ip address and Country Check using ipinfo result
     console.log(result);
 
     // User check using personal public key in MongoDB
+
     //let userInfo = await db.find(df.TALBENAMES.ACCOUNT, {"publicKey":req.query.publicKey});
 
     // File_id check in MongoDB
-    let fileData = await db.find(df.TALBENAMES.FILE, {fileId : req.query.fileId});
+
+    let fileData = await db.find(df.TALBENAMES.FILE, {"file_id" : fileId});
     console.log(fileData);
 
     // load File
@@ -146,27 +155,37 @@ router.get('/download', async function (req, res) {
   // check File Hash
 
   var fileResult = "";
+
   try {
 
-    const saveTo = path.join(df.fileSavePath, req.query.fileId);
+    const saveTo = path.join(df.fileSavePath, fileId);
 
     fileResult = await tools.makeEdcryptedFile(saveTo);
+
     console.log(fileResult.length);
+
   } catch (error) {
+
     console.error(error);
+
     // expected output: ReferenceError: nonExistentFunction is not defined
+
     // Note - error messages will vary depending on browser
+
   }
 
   var bf = Buffer.from(fileResult, 'base64');
+
   res.writeHead(200, {
     "Content-Disposition": "attachment;filename="+ fileData.file_name,
     'Content-Type': fileData.mimetype,
     'Content-Length': bf.length
   });
+
   res.end(bf);
 
 });
+
 
 
 module.exports = router;
