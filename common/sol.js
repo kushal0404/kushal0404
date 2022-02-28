@@ -67,7 +67,6 @@ module.exports.transferSOL = async (from, to, solToTransfer) =>
 module.exports.memoTransaction = async (fromPublicKey, toPublicKey, memo) =>
 {
   let connection =  makeSolConnection();
-  let transaction = new web3.Transaction();
   
   let type = web3.SYSTEM_INSTRUCTION_LAYOUTS.Transfer;
    let data = Buffer.alloc(type.layout.span);
