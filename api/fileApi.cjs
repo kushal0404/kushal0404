@@ -158,10 +158,13 @@ router.get('/download', async function (req, res) {
     // Note - error messages will vary depending on browser
   }
 
-  res.writeHead(200, {'Content-Type': 'text/html'});
-  res.write('<html><body><img src="data:image/jpeg;base64,')
-  res.write(fileResult);
-  res.end('"/></body></html>');
+  var bf = Buffer.from(fileResult, 'base64');
+  res.writeHead(200, {
+    "Content-Disposition": "attachment;filename="+ fileData.file_name,
+    'Content-Type': fileData.mimetype,
+    'Content-Length': bf.length
+  });
+  res.end(bf);
 
 });
 
