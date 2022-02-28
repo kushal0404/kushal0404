@@ -1,0 +1,36 @@
+/* //for finding an account
+    let query={ public_key: account.publicKey.toString()}
+    let foundAccount=await find(df.TALBENAMES.ACCOUNT,query);
+    console.log(foundAccount.public_key); */
+
+    /* //inserting metadata
+    let metaparams={
+        lawyer_name:"Kushal",
+        client_name:"Gurjyot"
+    }
+    let metaObj=format.metaformat(metaparams);
+    metaObj.meta_data_id=await db.getValueForNextSequence(df.TALBENAMES.META_SEQ);
+    let insertmetaObj=await insert(df.TALBENAMES.META,metaObj); */
+
+    /* //for finding metadata
+    let query1={ meta_data_id: 1}
+    let foundMeta=await find(df.TALBENAMES.META,query1);
+    console.log(foundMeta.client_name); */
+
+    /* //inserting transactions
+    let transactionParams={
+        transaction_status:"success",
+        confirmation_status:"success"
+    }
+    let transactObj=format.transactionFormat(transactionParams);
+    transactObj.transaction_id=await db.getValueForNextSequence(df.TALBENAMES.TRANSACTION_SEQ);
+    let insertTransactObj=await insert(df.TALBENAMES.TRANSACTION,transactObj); */
+
+    /* //for finding transaction
+    let query2={
+                transaction_id:1,
+                transaction_status: "success",
+                confirmation_status:"success"
+            }
+    let foundtransaction=await find(df.TALBENAMES.TRANSACTION,query2);
+    console.log(foundtransaction.transaction_id); */
