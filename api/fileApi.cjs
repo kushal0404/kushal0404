@@ -19,14 +19,16 @@ var tools = require('../common/tools');
 var df = require('../config/define');
 const db = require('../common/db');
 const format = require('../config/format');
-db.init();
+
 //const ObjectId = require('mongodb').ObjectID;
 
 
-router.get('/', async function(req, res){
+router.get('/fileApi', async function(req, res){
   
     res.send('<html><head></head><body>\
+      <h3>File upload</h3>\
       <form method="POST" enctype="multipart/form-data">\
+      <input type="text" name="login_token" placeholder="input login token"><br />\
       <input type="text" name="public_key" placeholder="input lawyer public key"><br />\
       <input type="text" name="version_number" placeholder="input version number"><br />\
       <input type="text" name="file_type" placeholder="input file_type (W or S)"><br />\
@@ -39,8 +41,22 @@ router.get('/', async function(req, res){
 
  });
 
+ router.get('/fileApi/download', async function(req, res){
+  
+  res.send('<html><head></head><body>\
+    <h3>File Download</h3>\
+    <form method="POST" enctype="multipart/form-data">\
+    <input type="text" name="login_token" placeholder="input login token"><br />\
+    <input type="text" name="file_id" placeholder="input file id"><br />\
+    <input type="submit" value="submit">\
+    </form>\
+    </body></html>');
+  res.end();
+
+});
+
  // accept POST request on the homepage
- router.post('/',async function (req, res) {
+ router.post('/fileApi',async function (req, res) {
 
   // return Data filed
   var rntData = [];
@@ -126,7 +142,7 @@ router.get('/', async function(req, res){
 
 });
 
-router.get('/download', async function (req, res) {
+router.post('/fileApi/download', async function (req, res) {
 
   var fileId = req.query.file_id;
   if(fileId == null || fileId.length == 0){

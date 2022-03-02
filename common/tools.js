@@ -53,6 +53,7 @@ module.exports = {
         // Updating encrypted text
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
+        
 
         // returns data after decryption
         return decrypted.toString();
