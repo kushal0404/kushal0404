@@ -1,3 +1,4 @@
+var df = require('../config/define');
 module.exports={
     accountformat : (request) => {
         return {
@@ -40,18 +41,25 @@ module.exports={
         };
     },
     transactionFormat : (params) => {
+        console.log(params.transact_response.transaction.feePayer)
+        let fromAccount=params.transact_response.transaction.feePayer;
+        let toAccount=params.transact_response.transaction.instructions[0].keys[1].pubkey;
+        let blockhash=params.transact_response.transaction.recentBlockhash;
+        let memo_id=params.transact_response.meta.logMessages[3].split("\\n")[0].split("memo_id:")[1].split(",")[0];
+        let signature=params.transact_signature;
+        let fee=params.transact_response.meta.fee;
+        let postWalletBalance=params.transact_response.meta.postBalances[0];
         return {
-            transaction_id:null,
-            sol_transferred:null,
-            from_account:null,
-            to_account:null,
-            block_id:null,
+            sol_transferred:0,
+            from_account:fromAccount!= (undefined || "") ? fromAccount.toString() : null,
+            to_account:toAccount!= (undefined || "") ? toAccount : null,
+            block_id:blockhash!= (undefined || "") ? blockhash : null,
             transaction_status:null,
-            signature:null,
-            confirmation_status:null,
-            transaction_fee:null,
-            wallet_balance:null,
-            memo_id:null,
+            signature:signature!= (undefined || "") ? signature : null,
+            confirmation_status:"success",
+            transaction_fee:fee!= (undefined || "") ? fee : null,
+            wallet_balance:postWalletBalance!= (undefined || "") ? postWalletBalance : null,
+            memo_id:memo_id!= (undefined || "") ? memo_id : null,
             transaction_created_on:new Date()
         };
     },
@@ -68,5 +76,4 @@ module.exports={
           created_on : new Date()
         };
     },
-
 }

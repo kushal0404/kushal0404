@@ -13,7 +13,8 @@ module.exports = {
     secretKey : 'vOVH6sdmpNWjRRIqCc7rdxs01lwHzkz9',
     fileSavePath : './upload',
     solConnection :  "devnet", //"mainnet-beta",
-    LAMPORTS_PER_SOL:1000000000
+    LAMPORTS_PER_SOL:1000000000,
+    RESPONSE_CODES : {200:"success"},
 };
 
 module.exports.rtnformat = (status, message, data) => {
