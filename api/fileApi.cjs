@@ -108,10 +108,12 @@ router.get('/fileApi', async function(req, res){
         let tempData = tempFileData[i];
         let tempSaveTo = tempData.tempSaveTo;
         const fileBuffer = fs.readFileSync(tempSaveTo);
-      
+        ;
+
         // get file hash code
         const hashSum = crypto.createHash('sha256');
-        hashSum.update(fileBuffer);
+        //hashSum.update(fileBuffer);
+        hashSum.update(fileBuffer.toString(df.BASE64));
         fileHash = hashSum.digest('hex');
 
         var fileId = tools.makeEncryptedFile(tempSaveTo);
