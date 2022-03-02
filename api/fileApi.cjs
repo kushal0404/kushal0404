@@ -144,7 +144,10 @@ router.get('/fileApi', async function(req, res){
 
 router.post('/fileApi/download', async function (req, res) {
 
-  var fileId = req.query.file_id;
+  // get paramter and files
+  const {files, fields} = await asyncBusboy(req);
+  var fileId = fields["file_id"];
+
   if(fileId == null || fileId.length == 0){
     res.send(df.rtnformat(200,  "file_id is required", null));   
     res.end();
