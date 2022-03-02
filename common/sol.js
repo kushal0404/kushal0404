@@ -62,3 +62,54 @@ module.exports.transferSOL = async (from, to, solToTransfer) =>
   let signature=await web3.sendAndConfirmTransaction(makeSolConnection(), transaction, [from]);
   return signature;
 };
+
+// memo transaction sol
+module.exports.memoTransaction = async (fromPublicKey, toPublicKey, memo) =>
+{
+  let connection =  makeSolConnection();
+  
+  let type = web3.SYSTEM_INSTRUCTION_LAYOUTS.Transfer;
+   let data = Buffer.alloc(type.layout.span);
+   let layoutFields = Object.assign({instruction: type.index});
+   type.layout.encode(layoutFields, data);
+
+    let recentBlockhash = await connection.getRecentBlockhash();
+
+    let messageParams = {
+        accountKeys: [
+            fromPublicKey.publicKey.toString(),
+            toPublicKey.toString(),
+            web3.SystemProgram.programId.toString()
+        ],
+        header: {
+            numReadonlySignedAccounts: 0,
+            numReadonlyUnsignedAccounts: 1,
+            numRequiredSignatures: 1,
+        },
+        instructions: [
+            {
+            accounts: [0, 1],
+            data: bs58.encode(data),
+            programIdIndex: 2,
+            },
+        ],
+        recentBlockhash,
+    };
+
+    let message = new web3.Message(messageParams);
+    
+    let transaction = web3.Transaction.populate(
+        message,
+        [fromPublicKey.publicKey.toString()]
+    );
+
+    const instruction = new web3.TransactionInstruction(
+        {
+           keys: [],
+           programId: new web3.PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+           data: Buffer.from(memo)
+         }
+   );
+    var trid = await web3.sendAndConfirmTransaction(connection, transaction.add(instruction), [fromPublicKey]);
+    return await connection.getConfirmedTransaction(trid);
+};
