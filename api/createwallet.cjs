@@ -8,7 +8,6 @@ var tools = require('../common/tools');
 const db = require('../common/db');
 const sol = require('../common/sol');
 const format = require('../config/format');
-db.init();
 
 routerObj.use(bodyParser.urlencoded({ extended: true }))
 

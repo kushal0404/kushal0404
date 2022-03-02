@@ -10,8 +10,6 @@ const df = require('../config/define');
 let client;
 let db;
 
-// Initialize Mongo Client
-module.exports.init = async () => {
     if(client == null) {
         client = new MongoClinet(df.DBURL, {useNewUrlParser: true});
 

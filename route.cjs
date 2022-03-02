@@ -15,9 +15,5 @@ app.get('/',function(req,res)
 
 
 
-app.use('/', require('./api/commonApi'));
-app.use('/fileApi', require('./api/fileApi.cjs'));
-app.post('/createwallet', require('./api/createwallet.cjs'));
-app.get('/transfer', require("./api/solanaApi.js"));
 
 app.listen(3000, () => console.log(`App listening on port 3000`))
