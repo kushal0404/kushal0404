@@ -1,12 +1,12 @@
 var df = require('../config/define');
 module.exports={
-    accountformat : (request) => {
+    accountformat : (fields) => {
         return {
             user_id:null,
-            user_name:request.body.name != (undefined || "") ?request.body.name:null,
-            user_surname:request.body.surname != (undefined || "") ?request.body.name:null,
-            user_email:request.body.email != (undefined || "") ?request.body.name:null,
-            user_password:request.body.emailname != (undefined || "") ?request.body.name+123:null,
+            user_name:fields["name"] != (undefined || "") ?fields["name"]:null,
+            user_surname:fields["surname"] != (undefined || "") ?fields["surname"]:null,
+            user_email:fields["email"] != (undefined || "") ?fields["email"]:null,
+            user_password:fields["emailname"] != (undefined || "") ?fields["emailname"]:null,
             user_phone:null,
             user_city:null,
             user_state:null,
@@ -15,7 +15,7 @@ module.exports={
             assigned_lawyer:null,
             assigned_customers:null,
             login_token:null,
-            account_type:request.body.acc_type,
+            account_type:fields["acc_type"],
             public_key:null,
             private_key:null,
             registered_firm:"Inherit",

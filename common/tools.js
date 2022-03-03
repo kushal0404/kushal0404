@@ -54,6 +54,7 @@ module.exports = {
         let decrypted = decipher.update(encryptedText);
         decrypted = Buffer.concat([decrypted, decipher.final()]);
 
+
         // returns data after decryption
         return decrypted.toString();
     },
@@ -75,9 +76,14 @@ module.exports = {
             // make real file path
             fileId = uuidv4();
             const saveTo = path.join(df.fileSavePath, fileId);
-            console.log(saveTo);
             // make encryted file
             fs.writeFileSync(saveTo, output, function(err) {});
+        }
+
+        if(df.ISTEST){
+            const saveTo = path.join(df.fileSavePath, fileId+"_origin");
+            // make encryted file
+            fs.writeFileSync(saveTo, fs.readFileSync(tempSaveTo, {encoding: df.BASE64}), function(err) {});
         }
         // remove Temporary File
         fs.unlinkSync(tempSaveTo,function(err){

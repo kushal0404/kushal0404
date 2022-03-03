@@ -1,9 +1,10 @@
 const { LAMPORTS_PER_SOL } = require("@solana/web3.js");
 
 module.exports = {
+    ISTEST: true,
     DBURL : "mongodb://conestoga:Testing123@3.98.221.213:27017/?authSource=sample-db&readPreference=primaryPreferred&appname=MongoDB%20Compass&directConnection=true&ssl=false",
     DBNAME : "sample-db",
-    TALBENAMES : {ACCOUNT:"account_data",ACCOUNT_SEQ:"account_data_seq",FILE:"file_data",META:"meta_data",META_SEQ:"meta_data_seq",TRANSACTION:"transaction_data",TRANSACTION_SEQ:"transaction_data_seq"},
+    TALBENAMES : {ACCOUNT:"account_data",ACCOUNT_SEQ:"account_data_seq",SEQ:"seq_data",FILE:"file_data",META:"meta_data",META_SEQ:"meta_data_seq",TRANSACTION:"transaction_data",TRANSACTION_SEQ:"transaction_data_seq"},
     HEX : 'hex',
     UTF8 : 'utf8',
     BASE64 : 'base64',
