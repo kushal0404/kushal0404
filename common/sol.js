@@ -50,17 +50,31 @@ function conversions(from) {
 }
 
 // transfer sol
-module.exports.transferSOL = async (from, to, solToTransfer) =>
+module.exports.transferSOL = async (from, to, solToTransfer, metaObj) =>
 {
   let transaction = new web3.Transaction();
+  let connection =  makeSolConnection();
+  let memoString = buildmemostring(metaObj);
   // Add an instruction to execute
   transaction.add(web3.SystemProgram.transfer({
     fromPubkey: from.publicKey,
     toPubkey: to.publicKey,
     lamports: solToTransfer,
   }));
-  let signature=await web3.sendAndConfirmTransaction(makeSolConnection(), transaction, [from]);
-  return signature;
+
+  const instruction = new web3.TransactionInstruction(
+    {
+       keys: [],
+       programId: new web3.PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+       data: Buffer.from(memoString)
+     });
+  let signature=await web3.sendAndConfirmTransaction(makeSolConnection(), transaction.add(instruction), [from]);
+  let response=await connection.getConfirmedTransaction(signature);
+    let responseObj={
+        transact_signature:signature,
+        transact_response:response
+    }
+    return responseObj;
 };
 
 // memo transaction sol
@@ -68,18 +82,7 @@ module.exports.memoTransaction = async (fromPublicKey, toPublicKey, memoObj) =>
 {
   let connection =  makeSolConnection();
   let transaction = new web3.Transaction();
-  let memoString="memo_id:"+memoObj._id+",\n";
-  memoString += "lawyer_name:"+memoObj.lawyer_name+",\n";
-  memoString += "client_name:"+memoObj.client_name+",\n";
-  memoString += "lawyer_postal_code:"+memoObj.lawyer_postal_code+",\n";
-  memoString += "client_postal_code:"+memoObj.client_postal_code+",\n";
-  memoString += "type_of_doc:"+memoObj.type_of_doc+",\n";
-  memoString += "date_of_sign:"+memoObj.date_of_sign+",\n";
-  memoString += "mode_of_sign:"+memoObj.mode_of_sign+",\n";
-  memoString += "hash_of_file:"+memoObj.hash_of_file+",\n";
-  memoString += "file_id:"+memoObj.file_id+",\n";
-  memoString += "file_version:"+memoObj.file_version+",\n";
-  memoString += "executor_name:"+memoObj.executor_name+",\n";
+  let memoString=buildmemostring(memoObj);
 
   let type = web3.SYSTEM_INSTRUCTION_LAYOUTS.Transfer;
    let data = Buffer.alloc(type.layout.span);
@@ -131,3 +134,19 @@ module.exports.memoTransaction = async (fromPublicKey, toPublicKey, memoObj) =>
     }
     return responseObj;
 };
+function buildmemostring(metaObj) {
+    let memoString = "memo_id:" + metaObj._id + ",\n";
+    memoString += "lawyer_name:" + metaObj.lawyer_name + ",\n";
+    memoString += "client_name:" + metaObj.client_name + ",\n";
+    memoString += "lawyer_postal_code:" + metaObj.lawyer_postal_code + ",\n";
+    memoString += "client_postal_code:" + metaObj.client_postal_code + ",\n";
+    memoString += "type_of_doc:" + metaObj.type_of_doc + ",\n";
+    memoString += "date_of_sign:" + metaObj.date_of_sign + ",\n";
+    memoString += "mode_of_sign:" + metaObj.mode_of_sign + ",\n";
+    memoString += "hash_of_file:" + metaObj.hash_of_file + ",\n";
+    memoString += "file_id:" + metaObj.file_id + ",\n";
+    memoString += "file_version:" + metaObj.file_version + ",\n";
+    memoString += "executor_name:" + metaObj.executor_name + "\n";
+    return memoString;
+}
+

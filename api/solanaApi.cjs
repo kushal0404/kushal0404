@@ -11,13 +11,13 @@ const format = require('../config/format');
 //routerObj.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/transfer', async function(req, res){
-  
+
   res.send('<html><head></head><body>\
     <h3>Transfer Sol</h3>\
     <form method="POST" enctype="multipart/form-data">\
-    <input type="text" name="login_token" placeholder="input login token"><br />\
-    <input type="text" name="public_key" placeholder="input lawyer public key"><br />\
-    <input type="text" name="sol" placeholder="input SOL amount"><br />\
+    <input type="text" name="from_public_key" placeholder="Enter from public key"><br />\
+    <input type="text" name="to_public_key" placeholder="Enter to public key"><br />\
+    <input type="text" name="sol" placeholder="Enter SOL amount"><br />\
     <input type="submit" value="submit">\
     </form>\
     </body></html>');
@@ -29,11 +29,11 @@ router.post('/transfer', async function(req, res)
 {
 
   // get paramter and files
-  const {files, fields} = await asyncBusboy(req); 
+  const {files, fields} = await asyncBusboy(req);
 
   //for finding an account
-  
-  let adminAccount=await db.find(df.TALBENAMES.ACCOUNT,{ account_type: "A"});
+
+  let senderAccount=await db.find(df.TALBENAMES.ACCOUNT,{ public_key: fields["from_public_key"]});
   // login_token check
   // if(adminAccount.login_token != fields["login_token"]){
   //   res.send(df.rtnformat(400, "Login Token Error!", {}));
@@ -41,7 +41,7 @@ router.post('/transfer', async function(req, res)
   //   return;
   // }
 
-  let clientAccount=await db.find(df.TALBENAMES.ACCOUNT,{ public_key: fields["public_key"]});
+  let receiverAccount=await db.find(df.TALBENAMES.ACCOUNT,{ public_key: fields["to_public_key"]});
   // Lawyer account check
   // if(clientAccount == null || clientAccount.account_type != "L"){
   //   res.send(df.rtnformat(400, "It isn't exist Lawyer.", {}));
@@ -49,43 +49,44 @@ router.post('/transfer', async function(req, res)
   //   return;
   // }
 
-  // make admin key fair
-  let adminKeypair=tools.getKeypairFromSecretKey(tools.decryptSecretKey(adminAccount.private_key));
-  // make lawyer key fair
-  let clientKeypair=tools.getKeypairFromSecretKey(tools.decryptSecretKey(clientAccount.private_key));
+  // make sender keypair
+  let senderKeypair=tools.getKeypairFromSecretKey(tools.decryptSecretKey(senderAccount.private_key));
+  // make receiver keypair
+  let receiverKeypair=tools.getKeypairFromSecretKey(tools.decryptSecretKey(receiverAccount.private_key));
   // set transfer SOL amount
-  let solToTransfer=1*df.LAMPORTS_PER_SOL;
+  let solToTransfer=fields["sol"]*df.LAMPORTS_PER_SOL;
 
-  // check admin Sol balance
-  let existingBalance=await sol.checkAccountBalance(adminKeypair.publicKey);
-  
-  
-  if(existingBalance>=solToTransfer)
+  // check sender wallet balance
+  let existingBalance=await sol.checkAccountBalance(senderKeypair.publicKey);
+
+  if(existingBalance>=solToTransfer+5000)
   {
-    // SOl transfer
-    let signature=await sol.transferSOL(adminKeypair,clientKeypair,solToTransfer);
-    console.log("Signature"+signature);
-    // get transacntion info 
-    // 
-    // insert transaction data on DB
-    //
+    //for finding metadata
+    let foundMeta=await db.find(df.TALBENAMES.META,{ lawyer_name: "Admin"});
 
-    // get admin sol balance 
-    let adminBalance=await sol.checkAccountBalance(adminKeypair.publicKey);
-    // get lawyer sol balance 
-    let lawyerBalance=await sol.checkAccountBalance(clientKeypair.publicKey);
+    // SOl transfer
+    let memo_response=await sol.transferSOL(senderKeypair,receiverKeypair,solToTransfer,foundMeta);
+
+    //building a transaction object from the response
+    let transactObj=format.transactionFormat(memo_response,solToTransfer);
+    //Inserting transaction object into the transaction_data table
+    await db.insertOne(df.TALBENAMES.TRANSACTION,transactObj);
+
+    //getting sender balance
+    let senderBalance=await sol.checkAccountBalance(senderKeypair.publicKey);
+    // gettting receiver balance
+    let receiverBalance=await sol.checkAccountBalance(receiverKeypair.publicKey);
 
     // update sol balance info on DB
-    await db.updateOne(df.TALBENAMES.ACCOUNT,adminAccount,{ "wallet_balance": adminBalance });
-    await db.updateOne(df.TALBENAMES.ACCOUNT,clientAccount,{ "wallet_balance": lawyerBalance });
-
+    await db.updateOne(df.TALBENAMES.ACCOUNT,senderAccount,{ "wallet_balance": senderBalance });
+    await db.updateOne(df.TALBENAMES.ACCOUNT,receiverAccount,{ "wallet_balance": receiverBalance });
 
     //await updateBalance(adminAccount);
-    res.send(df.rtnformat(200, "Transfered", {"signature": signature}));
+    res.send(df.rtnformat(200, "Transfered", {"memo_response": memo_response}));
     res.end();
   }else
   {
-    res.send(df.rtnformat(400, "Transaction Failed !", {}));
+    res.send(df.rtnformat(400, "Transaction Failed, due to insufficient balance !", {}));
     res.end();
   }
 });

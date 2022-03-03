@@ -40,8 +40,7 @@ module.exports={
             meta_created_on:new Date()
         };
     },
-    transactionFormat : (params) => {
-        console.log(params.transact_response.transaction.feePayer)
+    transactionFormat : (params,solToTransfer) => {
         let fromAccount=params.transact_response.transaction.feePayer;
         let toAccount=params.transact_response.transaction.instructions[0].keys[1].pubkey;
         let blockhash=params.transact_response.transaction.recentBlockhash;
@@ -50,9 +49,9 @@ module.exports={
         let fee=params.transact_response.meta.fee;
         let postWalletBalance=params.transact_response.meta.postBalances[0];
         return {
-            sol_transferred:0,
+            sol_transferred:solToTransfer,
             from_account:fromAccount!= (undefined || "") ? fromAccount.toString() : null,
-            to_account:toAccount!= (undefined || "") ? toAccount : null,
+            to_account:toAccount!= (undefined || "") ? toAccount.toString() : null,
             block_id:blockhash!= (undefined || "") ? blockhash : null,
             transaction_status:null,
             signature:signature!= (undefined || "") ? signature : null,
