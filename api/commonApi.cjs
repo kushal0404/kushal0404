@@ -20,6 +20,8 @@
   // when sign in, get public key and update userToken for the cheking sign in on lagaci
  router.get('/updateUserToken', async function(req, res){
  
+
+    var publicK = "publicKey";
     let loginToken = "";
     let userInfo = await db.find(df.TALBENAMES.ACCOUNT, {"publicKey":req.query.publicKey});
     console.log(userInfo);
@@ -37,8 +39,8 @@
     //const id = new Object("621d1d218ef5594f2cfc0a19");
     console.log(ObjectId("621d1d218ef5594f2cfc0a19"));
     console.log(await db.find(df.TALBENAMES.ACCOUNT, { _id: ObjectId("621d1d218ef5594f2cfc0a19")}));
-     res.send(df.rtnformat(200,  "message field!!", {"loginToken":loginToken}));  
-     res.end();
+    res.send(df.rtnformat(200,  "message field!!", {"loginToken":loginToken}));  
+    res.end();
  
   });
  

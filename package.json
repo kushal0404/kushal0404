@@ -21,6 +21,7 @@
     "busboy": "^1.4.0",
     "crypto": "^1.0.1",
     "docdash": "^1.2.0",
+    "dotenv": "^16.0.0",
     "express": "^4.17.1",
     "ipinfo": "^1.5.1",
     "jquery": "^3.6.0",

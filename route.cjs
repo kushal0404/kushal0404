@@ -1,10 +1,11 @@
+require("dotenv").config();
 var express = require('express');
 
 var app = express();
 
 app.use(express.static(__dirname));
 
-const port = 3000;
+const port = process.env.PORT;
 
 // HOME PAGE FOR REGISTRATION
 app.get('/',function(req,res)
@@ -19,4 +20,4 @@ app.use('/', require('./api/createwallet.cjs'));
 app.use('/', require("./api/solanaApi.cjs"));
 
 
-app.listen(3000, () => console.log(`App listening on port 3000`))
+app.listen(port, () => console.log(`App listening on port `+port))
